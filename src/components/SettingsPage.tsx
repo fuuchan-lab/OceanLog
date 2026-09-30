@@ -1,0 +1,334 @@
+import { useState } from 'react'
+import { driveConfig } from '../drive.ts'
+import { formatPosition, parseCoord, type LatLon, type WindUnit, WIND_UNIT_LABEL } from '../geo.ts'
+import type { GoogleAuth } from '../hooks/useGoogleAuth.ts'
+import type { SyncState } from '../hooks/useSync.ts'
+import { LOCALES, type Lang } from '../i18n/context.ts'
+import { useI18n } from '../i18n/useI18n.ts'
+import { newId } from '../device.ts'
+import type { HomePort, Profile } from '../profile.ts'
+import { isValidTileUrl, type Settings } from '../settings.ts'
+import { applyTheme, loadTheme, saveTheme, type ThemePreference } from '../theme.ts'
+import { syncText } from './Header.tsx'
+
+interface Props {
+  auth: GoogleAuth
+  sync: SyncState
+  unsyncedCount: number
+  profile: Profile
+  onProfile: (update: (p: Profile) => Profile) => void
+  settings: Settings
+  onSettings: (s: Settings) => void
+  here: LatLon | null
+}
+
+function PortForm({ initial, here, onSave, onDelete, onClose }: { initial: HomePort; here: LatLon | null; onSave: (p: HomePort) => void; onDelete?: () => void; onClose: () => void }) {
+  const { t } = useI18n()
+  const [name, setName] = useState(initial.name)
+  const [lat, setLat] = useState(initial.lat ? initial.lat.toFixed(5) : '')
+  const [lon, setLon] = useState(initial.lon ? initial.lon.toFixed(5) : '')
+  const [z0, setZ0] = useState(String(Math.round(initial.z0 * 100)))
+  const [danger, setDanger] = useState(String(Math.round(initial.dangerLevel * 100)))
+  const latV = parseCoord(lat, true)
+  const lonV = parseCoord(lon, false)
+  const z0V = Number(z0)
+  const dangerV = Number(danger)
+  const valid = name.trim() !== '' && latV !== null && lonV !== null && Number.isFinite(z0V) && Number.isFinite(dangerV)
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <form
+        className="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="port-title"
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (!valid) return
+          onSave({ ...initial, name: name.trim(), lat: latV, lon: lonV, z0: z0V / 100, dangerLevel: dangerV / 100 })
+        }}
+      >
+        <div className="row">
+          <h2 id="port-title">{t('port.edit')}</h2>
+          <button type="button" className="link" onClick={onClose} aria-label={t('common.close')}>
+            ✕
+          </button>
+        </div>
+        <label>
+          {t('port.name')}
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('port.namePlaceholder')} required />
+        </label>
+        <div className="grid2">
+          <label>
+            {t('port.lat')}
+            <input value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" placeholder="35.12345" />
+          </label>
+          <label>
+            {t('port.lon')}
+            <input value={lon} onChange={(e) => setLon(e.target.value)} inputMode="decimal" placeholder="139.12345" />
+          </label>
+        </div>
+        {latV !== null && lonV !== null && <p className="muted small">{formatPosition({ lat: latV, lon: lonV })}</p>}
+        {here && (
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => {
+              setLat(here.lat.toFixed(5))
+              setLon(here.lon.toFixed(5))
+            }}
+          >
+            📍 {t('port.useHere')}
+          </button>
+        )}
+        <div className="grid2">
+          <label>
+            {t('port.danger')}
+            <input value={danger} onChange={(e) => setDanger(e.target.value)} inputMode="numeric" />
+          </label>
+          <label>
+            {t('port.z0')}
+            <input value={z0} onChange={(e) => setZ0(e.target.value)} inputMode="numeric" />
+          </label>
+        </div>
+        <p className="muted small">{t('port.dangerHint')}</p>
+        <p className="muted small">{t('port.z0Hint')}</p>
+        <button type="submit" className="primary" disabled={!valid}>
+          {t('common.save')}
+        </button>
+        {onDelete && (
+          <button type="button" className="danger-btn" onClick={onDelete}>
+            {t('common.delete')}
+          </button>
+        )}
+      </form>
+    </div>
+  )
+}
+
+/** 設定: アカウント・出航地・単位・地図・言語・配色・データの出典 */
+export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, settings, onSettings, here }: Props) {
+  const { t, lang, setLang } = useI18n()
+  const [editing, setEditing] = useState<{ port: HomePort; isNew: boolean } | null>(null)
+  const [theme, setTheme] = useState<ThemePreference>(loadTheme)
+  const [tileUrl, setTileUrl] = useState(settings.customTileUrl)
+  const [tileAttr, setTileAttr] = useState(settings.customTileAttribution)
+
+  const savePort = (port: HomePort, isNew: boolean) => {
+    onProfile((p) => ({
+      ...p,
+      ports: isNew ? [...p.ports, port] : p.ports.map((x) => (x.id === port.id ? port : x)),
+      activePortId: p.activePortId ?? port.id,
+    }))
+    setEditing(null)
+  }
+
+  return (
+    <>
+      <section className="card">
+        <h2>{t('account.title')}</h2>
+        {auth.account ? (
+          <>
+            <p>{auth.account.email ?? auth.account.name ?? t('account.fallback')}</p>
+            <p className="muted small">{t('account.storage', { folder: driveConfig.folderName })}</p>
+            <p className="muted small" role="status">
+              {syncText(sync, unsyncedCount, t, LOCALES[lang])}
+            </p>
+            <div className="row gap">
+              <button className="secondary" disabled={sync.status === 'syncing'} onClick={() => void sync.syncNow()}>
+                {t('account.syncNow')}
+              </button>
+              <button className="secondary" onClick={() => void auth.switchAccount()}>
+                {t('account.switch')}
+              </button>
+              <button className="link danger" onClick={auth.signOut}>
+                {t('account.signOut')}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="muted small">{t('account.loginLead', { folder: driveConfig.folderName })}</p>
+            <button className="primary" disabled={auth.connecting} onClick={() => void auth.login()}>
+              {auth.connecting ? t('google.connecting') : t('account.login')}
+            </button>
+          </>
+        )}
+      </section>
+
+      <section className="card">
+        <h2>{t('port.title')}</h2>
+        <p className="muted small">{t('port.lead')}</p>
+        <ul className="log-list">
+          {profile.ports.map((p) => (
+            <li key={p.id}>
+              <label className="check">
+                <input
+                  type="radio"
+                  name="active-port"
+                  checked={profile.activePortId === p.id}
+                  onChange={() => onProfile((pr) => ({ ...pr, activePortId: p.id }))}
+                  aria-label={t('port.setActive', { name: p.name })}
+                />
+                <span>
+                  🏠 <b>{p.name}</b>
+                  <br />
+                  <span className="small muted">
+                    {formatPosition(p)} · {t('port.summary', { v: Math.round(p.dangerLevel * 100), z0: Math.round(p.z0 * 100) })}
+                  </span>
+                </span>
+              </label>
+              <button className="link" onClick={() => setEditing({ port: p, isNew: false })}>
+                {t('common.edit')}
+              </button>
+            </li>
+          ))}
+        </ul>
+        <button
+          className="secondary"
+          onClick={() =>
+            setEditing({
+              port: { id: newId(), name: '', lat: here?.lat ?? 0, lon: here?.lon ?? 0, z0: 0, dangerLevel: 0.5 },
+              isNew: true,
+            })
+          }
+        >
+          ＋ {t('port.add')}
+        </button>
+      </section>
+
+      <section className="card">
+        <h2>{t('settings.units')}</h2>
+        <div className="seg">
+          {(['ms', 'kn', 'kmh'] as WindUnit[]).map((u) => (
+            <button key={u} className={settings.windUnit === u ? 'on' : ''} onClick={() => onSettings({ ...settings, windUnit: u })}>
+              {WIND_UNIT_LABEL[u]}
+            </button>
+          ))}
+        </div>
+        <p className="muted small">{t('settings.unitsHint')}</p>
+      </section>
+
+      <section className="card">
+        <h2>{t('settings.customTiles')}</h2>
+        <p className="muted small">{t('settings.customTilesLead')}</p>
+        <label>
+          URL
+          <input value={tileUrl} onChange={(e) => setTileUrl(e.target.value)} placeholder="https://example.com/{z}/{x}/{y}.png" />
+        </label>
+        <label>
+          {t('settings.customTilesAttr')}
+          <input value={tileAttr} onChange={(e) => setTileAttr(e.target.value)} />
+        </label>
+        {tileUrl && !isValidTileUrl(tileUrl) && <p className="error small">{t('settings.customTilesInvalid')}</p>}
+        <button
+          className="secondary"
+          disabled={tileUrl !== '' && !isValidTileUrl(tileUrl)}
+          onClick={() => onSettings({ ...settings, customTileUrl: tileUrl.trim(), customTileAttribution: tileAttr.trim() })}
+        >
+          {t('common.save')}
+        </button>
+      </section>
+
+      <section className="card">
+        <h2>{t('settings.language')}</h2>
+        <div className="seg">
+          {(['ja', 'en'] as Lang[]).map((l) => (
+            <button key={l} className={lang === l ? 'on' : ''} onClick={() => setLang(l)}>
+              {l === 'ja' ? '日本語' : 'English'}
+            </button>
+          ))}
+        </div>
+        <h2>{t('settings.theme')}</h2>
+        <div className="seg">
+          {(['auto', 'light', 'dark'] as ThemePreference[]).map((v) => (
+            <button
+              key={v}
+              className={theme === v ? 'on' : ''}
+              onClick={() => {
+                setTheme(v)
+                saveTheme(v)
+                applyTheme(v)
+              }}
+            >
+              {t(`theme.${v}`)}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="card">
+        <h2>{t('about.title')}</h2>
+        <p className="small">{t('about.disclaimer')}</p>
+        <h3>{t('about.sources')}</h3>
+        <ul className="sources small">
+          <li>
+            <a href="https://open-meteo.com/" target="_blank" rel="noopener">
+              Open-Meteo
+            </a>{' '}
+            — {t('about.openMeteo')}
+          </li>
+          <li>
+            <a href="https://www.jma.go.jp/jma/kishou/info/coment.html" target="_blank" rel="noopener">
+              {t('about.jmaName')}
+            </a>{' '}
+            — {t('about.jma')}
+          </li>
+          <li>
+            <a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">
+              {t('about.gsiName')}
+            </a>{' '}
+            — {t('about.gsi')}
+          </li>
+          <li>
+            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">
+              OpenStreetMap
+            </a>{' '}
+            — {t('about.osm')}
+          </li>
+          <li>
+            <a href="https://www.openseamap.org/" target="_blank" rel="noopener">
+              OpenSeaMap
+            </a>{' '}
+            — {t('about.openseamap')}
+          </li>
+          <li>
+            <a href="https://www.gebco.net/" target="_blank" rel="noopener">
+              GEBCO
+            </a>{' '}
+            — {t('about.gebco')}
+          </li>
+          <li>
+            <a href="https://www.windy.com/" target="_blank" rel="noopener">
+              Windy.com
+            </a>{' '}
+            — {t('about.windy')}
+          </li>
+        </ul>
+        <p className="muted small">{t('about.local')}</p>
+      </section>
+
+      {editing && (
+        <PortForm
+          initial={editing.port}
+          here={here}
+          onClose={() => setEditing(null)}
+          onSave={(p) => savePort(p, editing.isNew)}
+          onDelete={
+            editing.isNew
+              ? undefined
+              : () => {
+                  if (!confirm(t('port.deleteConfirm', { name: editing.port.name }))) return
+                  onProfile((p) => {
+                    const ports = p.ports.filter((x) => x.id !== editing.port.id)
+                    return { ...p, ports, activePortId: p.activePortId === editing.port.id ? (ports[0]?.id ?? null) : p.activePortId }
+                  })
+                  setEditing(null)
+                }
+          }
+        />
+      )}
+    </>
+  )
+}
