@@ -17,6 +17,7 @@ import { useConditions } from './hooks/useConditions.ts'
 import { useGeolocation } from './hooks/useGeolocation.ts'
 import { useGoogleAuth } from './hooks/useGoogleAuth.ts'
 import { useJmaWarnings } from './hooks/useJmaWarnings.ts'
+import { marksToHazards, useOsmHazards } from './hooks/useHazards.ts'
 import { useLog } from './hooks/useLog.ts'
 import { useSync } from './hooks/useSync.ts'
 import { useI18n } from './i18n/useI18n.ts'
@@ -89,6 +90,10 @@ export default function App() {
   const basis = underway ? fix : (port ?? fix)
   const basisLabel = underway ? t('basis.underway') : !port ? t('basis.here') : t('basis.port', { port: port.name })
   const conditions = useConditions(basis)
+  // 危険物（暗岩・洗岩など）: 航行モード中は現在地、それ以外は見ている地図の周り
+  const [mapCenter, setMapCenter] = useState<LatLon | null>(null)
+  const osmHazards = useOsmHazards(underway ? fix : (mapCenter ?? basis))
+  const hazards = useMemo(() => [...osmHazards, ...marksToHazards(log.marks)], [osmHazards, log.marks])
   const warnings = useJmaWarnings([port, underway ? fix : null], lang)
 
   // 波・気象のボタンの「！」: 気象庁の注意報・警報・波高の危険・気圧の急な低下
@@ -138,6 +143,8 @@ export default function App() {
             shownTrack={shownTrack}
             onClearShown={() => setShownTrack(null)}
             focus={focus}
+            hazards={osmHazards}
+            onMapCenter={setMapCenter}
           />
           <button className="secondary log-open" onClick={() => go('log')}>
             📒 {t('log.open', { tracks: log.tracks.length, marks: log.marks.length })}
@@ -175,6 +182,7 @@ export default function App() {
             conditions={data}
             profile={profile}
             warnings={warnings}
+            hazards={hazards}
             underway={underway}
             onSelectPort={(id) => updateProfile((p) => ({ ...p, activePortId: id }))}
             onOpenSettings={() => go('settings')}

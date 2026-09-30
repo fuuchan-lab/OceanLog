@@ -1,11 +1,14 @@
 /** 記録する地点の種類。一覧・地図のアイコンに使う */
-export type MarkKind = 'point' | 'fishing' | 'anchor' | 'danger' | 'port' | 'fuel'
+export type MarkKind = 'point' | 'fishing' | 'anchor' | 'danger' | 'rockSubmerged' | 'rockAwash' | 'port' | 'fuel'
 
 export const MARK_ICONS: Record<MarkKind, string> = {
   point: '📍',
   fishing: '🎣',
   anchor: '⚓',
   danger: '⚠️',
+  // 海図の記号に近い形（暗岩は＋、洗岩は＊）。海図の上では、記号の絵で表示する
+  rockSubmerged: '✚',
+  rockAwash: '✳',
   port: '🛥️',
   fuel: '⛽',
 }

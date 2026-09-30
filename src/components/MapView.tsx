@@ -8,6 +8,7 @@ import { isValidTileUrl, type Settings } from '../settings.ts'
 import { BASE_LAYERS, GEBCO_WMS, SEAMARKS } from '../tiles.ts'
 import { MARK_ICONS, type Mark, type TrackPoint } from '../types.ts'
 import { splitSegments } from '../voyage.ts'
+import type { Hazard, WaterLevel } from '../hazards.ts'
 
 interface Props {
   settings: Settings
@@ -25,6 +26,8 @@ interface Props {
   onMarkClick: (mark: Mark) => void
   /** 地図の中心が変わった時（地点の登録・海図の保存の範囲に使う） */
   onCenter: (center: LatLon, zoom: number) => void
+  /** OpenSeaMap に登録された危険物（暗岩・洗岩・沈船など） */
+  hazards: Hazard[]
 }
 
 const shipIcon = (course: number | null) =>
@@ -36,6 +39,25 @@ const shipIcon = (course: number | null) =>
       course === null
         ? '<svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="8" class="ship-body"/><circle cx="17" cy="17" r="3" fill="#fff"/></svg>'
         : `<svg viewBox="0 0 34 34" style="transform:rotate(${course}deg)"><path d="M17 3 25 29 17 24 9 29z" class="ship-body"/></svg>`,
+  })
+
+/** 海図の記号に近い絵（暗岩: ＋と点線の円、洗岩: ＋と4つの点、干出岩: ＊、沈船、障害物） */
+function hazardSvg(kind: Hazard['kind'], level: WaterLevel): string {
+  const cross = '<path d="M16 7v18M7 16h18"/>'
+  if (kind === 'wreck') return '<path d="M5 18h22M10 18v-7M16 18v-9M22 18v-7"/><circle cx="16" cy="16" r="13" class="hz-danger"/>'
+  if (kind === 'obstruction') return '<circle cx="16" cy="16" r="10" class="hz-danger"/><text x="16" y="19.5" text-anchor="middle">Ob</text>'
+  if (level === 'submerged') return `${cross}<circle cx="16" cy="16" r="12" class="hz-danger"/>`
+  if (level === 'awash') return `${cross}<circle cx="10" cy="10" r="1.8" class="hz-dot"/><circle cx="22" cy="10" r="1.8" class="hz-dot"/><circle cx="10" cy="22" r="1.8" class="hz-dot"/><circle cx="22" cy="22" r="1.8" class="hz-dot"/>`
+  if (level === 'covers') return '<path d="M16 6v20M7.3 11l17.4 10M7.3 21l17.4-10"/>'
+  return '<circle cx="16" cy="16" r="5" class="hz-dot"/>'
+}
+
+export const hazardIcon = (kind: Hazard['kind'], level: WaterLevel, mine = false) =>
+  L.divIcon({
+    className: `hazard-icon${mine ? ' hazard-mine' : ''}`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    html: `<svg viewBox="0 0 32 32">${hazardSvg(kind, level)}</svg>`,
   })
 
 const markIcon = (emoji: string, cls = '') =>
@@ -65,7 +87,7 @@ function trackLayer(points: TrackPoint[], cls: string): L.LayerGroup {
 }
 
 /** Leaflet の地図（海図）。React からは、表示する中身を渡すだけにする */
-export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTrack, marks, ports, focus, onMarkClick, onCenter }: Props) {
+export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTrack, marks, ports, focus, onMarkClick, onCenter, hazards }: Props) {
   const el = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
   const layers = useRef<{
@@ -78,6 +100,7 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
     shown?: L.LayerGroup
     marks?: L.LayerGroup
     ports?: L.LayerGroup
+    hazards?: L.LayerGroup
   }>({})
   const cb = useRef({ onUserMove, onMarkClick, onCenter })
   useEffect(() => {
@@ -180,12 +203,33 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
     l.marks?.remove()
     l.marks = L.layerGroup(
       marks.map((mk) =>
-        L.marker([mk.lat, mk.lon], { icon: markIcon(MARK_ICONS[mk.kind]), title: mk.name })
+        L.marker([mk.lat, mk.lon], {
+          icon:
+            mk.kind === 'rockSubmerged' || mk.kind === 'rockAwash'
+              ? hazardIcon('rock', mk.kind === 'rockSubmerged' ? 'submerged' : 'awash', true)
+              : markIcon(MARK_ICONS[mk.kind]),
+          title: mk.name,
+        })
           .bindTooltip(mk.name, { direction: 'top', offset: [0, -24] })
           .on('click', () => cb.current.onMarkClick(mk)),
       ),
     ).addTo(m)
   }, [marks])
+
+  // OpenSeaMap の危険物（暗岩・洗岩・干出岩・沈船・障害物）
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    const l = layers.current
+    l.hazards?.remove()
+    l.hazards = L.layerGroup(
+      hazards.map((h) =>
+        L.marker([h.lat, h.lon], { icon: hazardIcon(h.kind, h.level), zIndexOffset: -100 }).bindTooltip(
+          [h.name, h.depth !== null ? `${h.depth}m` : ''].filter(Boolean).join(' ') || h.kind,
+        ),
+      ),
+    ).addTo(m)
+  }, [hazards])
 
   // 出航地
   useEffect(() => {

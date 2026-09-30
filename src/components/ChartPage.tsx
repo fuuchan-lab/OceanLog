@@ -9,8 +9,11 @@ import type { Profile } from '../profile.ts'
 import type { BaseLayer, Settings } from '../settings.ts'
 import type { Mark, TrackPoint } from '../types.ts'
 import { MapView } from './MapView.tsx'
+import { CompassRose } from './CompassRose.tsx'
+import { useCompass } from '../hooks/useCompass.ts'
 import { MarkForm, type MarkDraft } from './MarkForm.tsx'
 import { OfflineCharts } from './OfflineCharts.tsx'
+import type { Hazard } from '../hazards.ts'
 
 interface Props {
   geo: GeoState & { stale: boolean }
@@ -22,6 +25,9 @@ interface Props {
   shownTrack: TrackPoint[] | null
   onClearShown: () => void
   focus: (LatLon & { zoom?: number; key: number }) | null
+  hazards: Hazard[]
+  /** 地図の中心が変わった時（危険物の取得の範囲に使う） */
+  onMapCenter: (c: LatLon) => void
 }
 
 /** 画面を消さないようにする（航跡の記録中）。対応していない端末では何もしない */
@@ -51,7 +57,7 @@ function useWakeLock(active: boolean) {
 const LAYERS: BaseLayer[] = ['gsi-pale', 'gsi-photo', 'osm', 'gebco']
 
 /** 海図の画面。現在地・航跡の記録（出港・帰港）・地点の登録・オフライン用の保存 */
-export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPort, shownTrack, onClearShown, focus }: Props) {
+export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPort, shownTrack, onClearShown, focus, hazards, onMapCenter }: Props) {
   const { t, lang } = useI18n()
   const { fix } = geo
   const [follow, setFollow] = useState(true)
@@ -63,6 +69,7 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
   const [focusNow, setFocusNow] = useState(focus)
   useEffect(() => setFocusNow(focus), [focus])
   const active = log.activeTrack
+  const compass = useCompass()
   useWakeLock(active !== null)
 
   const nearestPort = fix
@@ -97,7 +104,11 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
           ports={profile.ports}
           focus={focusNow}
           onMarkClick={(m) => setMarkForm({ draft: { ...m }, edit: m })}
-          onCenter={(c) => setCenter(c)}
+          onCenter={(c) => {
+            setCenter(c)
+            onMapCenter(c)
+          }}
+          hazards={hazards}
         />
         {/* 地図の上に、位置・速力・針路 */}
         <div className="hud">
@@ -108,13 +119,20 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
               </span>
               <span>
                 <b>{fix.speed === null ? '—' : fmtNum(msToKnots(fix.speed))}</b> kn ·{' '}
-                <b>{fix.course === null ? '—' : String(Math.round(fix.course)).padStart(3, '0')}</b>°
+                <b>{fix.course === null ? '—' : String(Math.round(fix.course)).padStart(3, '0')}</b>° {t('compass.cogShort')}
+                {compass.heading !== null && (
+                  <>
+                    {' · 🧭 '}
+                    <b>{String(Math.round(compass.heading) % 360).padStart(3, '0')}</b>°
+                  </>
+                )}
               </span>
             </>
           ) : (
             <span>{geo.errorCode ? t(geo.errorCode === 1 ? 'pos.denied' : 'pos.unavailable') : t('pos.waiting')}</span>
           )}
         </div>
+        <CompassRose compass={compass} course={fix?.course ?? null} />
         <div className="map-buttons">
           <button className={`fab${follow ? ' on' : ''}`} onClick={() => setFollow(true)} aria-label={t('chart.follow')} title={t('chart.follow')}>
             ⌖
@@ -138,6 +156,10 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
               <input type="checkbox" checked={settings.seamarks} onChange={(e) => onSettings({ ...settings, seamarks: e.target.checked })} />
               {t('layer.seamarks')}
             </label>
+            <p className="small legend-line">
+              <b>✚</b> {t('hazard.submerged')} · <b>✳</b> {t('hazard.awash')} · <b>✱</b> {t('hazard.covers')}
+            </p>
+            <p className="muted small">{t('layer.hazardsNote')}</p>
           </div>
         )}
         {shownTrack && (

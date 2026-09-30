@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { fmtNum, fmtTime } from '../format.ts'
 import { formatDM, msToKnots } from '../geo.ts'
 import type { GeoState } from '../hooks/useGeolocation.ts'
+import { useCompass } from '../hooks/useCompass.ts'
 import { LOCALES } from '../i18n/context.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 
@@ -10,6 +11,7 @@ export function PositionCard({ geo, compact = false }: { geo: GeoState & { stale
   const { t, lang } = useI18n()
   const [copied, setCopied] = useState(false)
   const { fix } = geo
+  const compass = useCompass()
 
   const copy = async () => {
     if (!fix) return
@@ -56,6 +58,19 @@ export function PositionCard({ geo, compact = false }: { geo: GeoState & { stale
               </span>
             </div>
             <div>
+              <span className="stat-label">{t('pos.compass')}</span>
+              {compass.needsPermission && compass.supported ? (
+                <button className="link" onClick={() => void compass.enable()}>
+                  {t('compass.enable')}
+                </button>
+              ) : (
+                <span className="stat-value">
+                  {compass.heading === null ? '—' : String(Math.round(compass.heading) % 360).padStart(3, '0')}
+                  <small>°</small>
+                </span>
+              )}
+            </div>
+            <div>
               <span className="stat-label">{t('pos.accuracy')}</span>
               <span className="stat-value">
                 ±{Math.round(fix.accuracy)}
@@ -63,6 +78,7 @@ export function PositionCard({ geo, compact = false }: { geo: GeoState & { stale
               </span>
             </div>
           </div>
+          <p className="muted small">{t('pos.compassHint')}</p>
           {geo.stale && <p className="muted small">{t('pos.stale', { time: fmtTime(fix.t, LOCALES[lang]) })}</p>}
         </>
       ) : (

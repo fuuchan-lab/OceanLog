@@ -13,12 +13,16 @@ import { RENEWAL_NOTICE_DAYS, daysUntil, type Profile } from '../profile.ts'
 import { latestDeparture, portLevels, returnEstimate, tideCrossing, urgency, waveRisk, type Level } from '../safety.ts'
 import { sunTimes } from '../sun.ts'
 import { assessTrend } from '../warning.ts'
+import { HAZARD_CAUTION_M, HAZARD_WARN_M, nearbyHazards, type Hazard } from '../hazards.ts'
+import { compassPoint } from '../geo.ts'
 
 interface Props {
   fix: Fix | null
   conditions: Conditions | null
   profile: Profile
   warnings: WarningsState
+  /** 暗岩・洗岩・沈船など（OpenSeaMap と自分で記録したもの） */
+  hazards: Hazard[]
   /** 出港中（航跡を記録中） */
   underway: boolean
   onSelectPort: (id: string) => void
@@ -37,7 +41,7 @@ interface Item {
  * 航海の安全の目安をまとめて出す。気象庁の注意報・警報、出航地の干潮危険潮位までの時間、
  * 日没までの時間、遅くとも帰路につく時刻、波高の危険予測、気圧の急な変化
  */
-export function SafetyCard({ fix, conditions, profile, warnings, underway, onSelectPort, onOpenSettings }: Props) {
+export function SafetyCard({ fix, conditions, profile, warnings, hazards, underway, onSelectPort, onOpenSettings }: Props) {
   const { t, lang } = useI18n()
   const locale = LOCALES[lang]
   const port = profile.ports.find((p) => p.id === profile.activePortId) ?? profile.ports[0] ?? null
@@ -50,6 +54,30 @@ export function SafetyCard({ fix, conditions, profile, warnings, underway, onSel
     const list: Item[] = []
     // 出港前は出航地、出港してからは現在地を基準にする
     const here = underway ? (fix ?? port) : (port ?? fix)
+
+    // 近くの暗岩・洗岩など（航行モード中）
+    if (underway && fix) {
+      for (const n of nearbyHazards(fix, hazards, HAZARD_CAUTION_M).slice(0, 3)) {
+        const kindKey: MessageKey =
+          n.hazard.kind === 'wreck'
+            ? 'hazard.wreck'
+            : n.hazard.kind === 'obstruction'
+              ? 'hazard.obstruction'
+              : n.hazard.level === 'submerged'
+                ? 'hazard.submerged'
+                : n.hazard.level === 'awash'
+                  ? 'hazard.awash'
+                  : n.hazard.level === 'covers'
+                    ? 'hazard.covers'
+                    : 'hazard.rock'
+        list.push({
+          level: n.distance <= HAZARD_WARN_M ? 'warning' : 'caution',
+          icon: '🪨',
+          text: t('safety.hazard', { kind: t(kindKey), m: Math.round(n.distance), dir: compassPoint(n.bearing, lang) }),
+          sub: [n.hazard.name, n.hazard.source === 'mine' ? t('hazard.mine') : 'OpenSeaMap'].filter(Boolean).join(' · '),
+        })
+      }
+    }
 
     // 気象庁の注意報・警報
     for (const a of warnings.areas) {
@@ -182,7 +210,7 @@ export function SafetyCard({ fix, conditions, profile, warnings, underway, onSel
     return list.sort((a, b) => rank[a.level] - rank[b.level])
     // minute: 時間の経過で残り時間を作り直す
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fix, port, portTide.seaLevel, conditions, profile.boat, profile.docs, warnings, underway, t, locale, minute])
+  }, [fix, port, portTide.seaLevel, conditions, profile.boat, profile.docs, warnings, hazards, lang, underway, t, locale, minute])
 
   // 新しく「警告」が出たら、1回だけ振動で知らせる（対応している端末のみ）
   const warned = useRef('')
