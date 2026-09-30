@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { newId } from '../device.ts'
 import { useI18n } from '../i18n/useI18n.ts'
-import { isMsilUrl, MSIL_PORTAL, type MsilSettings } from '../msil.ts'
+import { isMsilUrl, MSIL_HOWTO, MSIL_PORTAL, type MsilSettings } from '../msil.ts'
 
 /**
  * 海しる（海上保安庁）の設定。利用登録の手順の案内・自分のキー・地図に重ねる項目
@@ -34,11 +34,17 @@ export function MsilSettingsCard({ msil, onChange }: { msil: MsilSettings; onCha
             </a>
           </li>
           <li>{t('msil.step2')}</li>
-          <li>{t('msil.step3')}</li>
+          <li>
+            {t('msil.step3')}{' '}
+            <a href={MSIL_HOWTO} target="_blank" rel="noopener">
+              {MSIL_HOWTO}
+            </a>
+          </li>
           <li>{t('msil.step4')}</li>
           <li>{t('msil.step5')}</li>
           <li>{t('msil.step6')}</li>
         </ol>
+        <p className="muted small">{t('msil.v3Note')}</p>
         <p className="muted small">{t('msil.terms')}</p>
       </details>
 

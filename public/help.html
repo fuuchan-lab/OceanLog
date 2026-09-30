@@ -251,13 +251,16 @@
 
         <section id="ja-msil">
           <h2>8. 海しる（海上保安庁）を使う</h2>
-          <p>海上保安庁の「海しる」の情報を、海図に重ねられます（任意）。利用登録は、使う人がそれぞれ行います。</p>
+          <p>海上保安庁の「海しる」の情報を、海図に重ねられます（任意・無料）。使う人がそれぞれ、キー（サブスクリプションキー）を設定に入れます。</p>
+          <div class="note">海しる API の開発者ポータルには、<strong>アカウントの登録（サインアップ）はありません</strong>。キーは次のどちらかで手に入れます。</div>
           <ol>
-            <li><a href="https://portal.msil.go.jp/" target="_blank" rel="noopener">海しる API の開発者ポータル</a>でサインアップし、利用規約に同意します。</li>
-            <li>利用する API を申し込み（サブスクライブ）、プロフィールでキー（主キー）をコピーします。</li>
+            <li><a href="https://portal.msil.go.jp/" target="_blank" rel="noopener">海しる API の開発者ポータル</a>を開き、上のメニューの「利用規約」を読みます（使う人は規約に同意したものとみなされます）。</li>
+            <li><strong>すぐ試す</strong>: 「<a href="https://portal.msil.go.jp/howtouse" target="_blank" rel="noopener">利用方法</a>」のページに、だれでも使える「試用サブスクリプションキー」が載っています。1つをコピーします（予告なく止まったり変わったりすることがあります）。</li>
+            <li><strong>自分のキー</strong>: 「利用方法」のページで案内している海上保安庁 海洋情報部の問い合わせフォームから、件名「海しるAPIサブスクリプションキー発行依頼」として、利用目的と使いたい項目を書いて申し込みます。</li>
             <li><kbd>⚙ 設定</kbd> →「海しる（海上保安庁）」の「API キー」に貼り付けて保存します。</li>
-            <li>「地図に重ねる項目」に、項目の名前と API の URL（…/MapServer）を追加します。</li>
+            <li>「項目一覧」のページで項目の API の URL を確かめ、「地図に重ねる項目」に名前と URL（…/MapServer）を追加します。</li>
           </ol>
+          <p>海しる API は新しい v3 に移行中です（v2 は 2027年12月末に終了予定）。キーはそのまま使えますが、項目の URL が変わることがあります。</p>
           <p>キーは端末と、ログイン中はあなたの Google ドライブにも保存され、同じアカウントの別の端末でもそのまま使えます。キーはほかの人に教えないでください。</p>
         </section>
 
@@ -402,7 +405,7 @@
 
         <section id="en-msil">
           <h2>8. MSIL (Japan Coast Guard)</h2>
-          <p>Optional. Each user registers at the <a href="https://portal.msil.go.jp/" target="_blank" rel="noopener">MSIL API developer portal</a>, subscribes, copies their key and pastes it in <kbd>Settings</kbd> → MSIL, then adds items (MapServer URLs). The key is saved on the device and, when signed in, in your Google Drive. Do not share your key.</p>
+          <p>Optional and free. The <a href="https://portal.msil.go.jp/" target="_blank" rel="noopener">MSIL API developer portal</a> has <strong>no account sign-up</strong>. Read the terms (利用規約), then either copy one of the trial keys on the <a href="https://portal.msil.go.jp/howtouse" target="_blank" rel="noopener">利用方法 (How to use)</a> page, or request your own key via the Japan Coast Guard Hydrographic Department inquiry form linked there (subject "海しるAPIサブスクリプションキー発行依頼"). Paste the key in <kbd>Settings</kbd> → MSIL, then add items (MapServer URLs from the item list). The API is moving to v3 and item URLs may change. The key is saved on the device and, when signed in, in your Google Drive. Do not share your key.</p>
         </section>
 
         <section id="en-drive">
