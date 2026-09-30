@@ -3528,3 +3528,9 @@ button.link {
   font-size: 10.5px;
   line-height: 1.35;
 }
+
+/* 設定のいちばん上の「ヘルプ・使い方・免責事項」（LeadLog と同じ、？の丸と文字を横に並べる） */
+.card.help-card {
+  flex-direction: row;
+  align-items: center;
+}

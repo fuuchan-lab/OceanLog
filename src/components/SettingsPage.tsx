@@ -8,7 +8,7 @@ import { useI18n } from '../i18n/useI18n.ts'
 import { newId } from '../device.ts'
 import type { HomePort, Profile } from '../profile.ts'
 import { isValidTileUrl, type Settings } from '../settings.ts'
-import { applyTheme, loadTheme, saveTheme, type ThemePreference } from '../theme.ts'
+import type { ThemePreference } from '../theme.ts'
 import { syncText } from './Header.tsx'
 import { MapPicker } from './MapPicker.tsx'
 import { MsilSettingsCard } from './MsilSettingsCard.tsx'
@@ -25,6 +25,9 @@ interface Props {
   here: LatLon | null
   msil: MsilSettings
   onMsil: (m: MsilSettings) => void
+  onLang: (l: Lang) => void
+  theme: ThemePreference
+  onTheme: (v: ThemePreference) => void
 }
 
 function PortForm({ initial, here, onSave, onDelete, onClose }: { initial: HomePort; here: LatLon | null; onSave: (p: HomePort) => void; onDelete?: () => void; onClose: () => void }) {
@@ -113,12 +116,18 @@ function PortForm({ initial, here, onSave, onDelete, onClose }: { initial: HomeP
 }
 
 /** 設定: アカウント・出航地・単位・地図・言語・配色・データの出典 */
-export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, settings, onSettings, here, msil, onMsil }: Props) {
-  const { t, lang, setLang } = useI18n()
+export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, settings, onSettings, here, msil, onMsil, onLang, theme, onTheme }: Props) {
+  const { t, lang } = useI18n()
   const [editing, setEditing] = useState<{ port: HomePort; isNew: boolean } | null>(null)
-  const [theme, setTheme] = useState<ThemePreference>(loadTheme)
   const [tileUrl, setTileUrl] = useState(settings.customTileUrl)
   const [tileAttr, setTileAttr] = useState(settings.customTileAttribution)
+  // 別の端末の設定をドライブから読み込んだ時は、入力欄も合わせる
+  const [tileFrom, setTileFrom] = useState(settings)
+  if (tileFrom.customTileUrl !== settings.customTileUrl || tileFrom.customTileAttribution !== settings.customTileAttribution) {
+    setTileFrom(settings)
+    setTileUrl(settings.customTileUrl)
+    setTileAttr(settings.customTileAttribution)
+  }
 
   const savePort = (port: HomePort, isNew: boolean) => {
     onProfile((p) => ({
@@ -131,12 +140,24 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, se
 
   return (
     <>
+      <a className="card help-card" href={`./help.html?lang=${lang}`} target="_blank" rel="noopener">
+        <span className="help-mark" aria-hidden="true">
+          ?
+        </span>
+        <span>
+          <strong>{t('help.title')}</strong>
+          <br />
+          <span className="muted small">{t('help.subtitle')}</span>
+        </span>
+      </a>
+
       <section className="card">
         <h2>{t('account.title')}</h2>
         {auth.account ? (
           <>
             <p>{auth.account.email ?? auth.account.name ?? t('account.fallback')}</p>
             <p className="muted small">{t('account.storage', { folder: driveConfig.folderName })}</p>
+            <p className="muted small">{t('account.prefsShared')}</p>
             <p className="muted small" role="status">
               {syncText(sync, unsyncedCount, t, LOCALES[lang])}
             </p>
@@ -242,7 +263,7 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, se
         <h2>{t('settings.language')}</h2>
         <div className="seg">
           {(['ja', 'en'] as Lang[]).map((l) => (
-            <button key={l} className={lang === l ? 'on' : ''} onClick={() => setLang(l)}>
+            <button key={l} className={lang === l ? 'on' : ''} onClick={() => onLang(l)}>
               {l === 'ja' ? '日本語' : 'English'}
             </button>
           ))}
@@ -253,11 +274,7 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, se
             <button
               key={v}
               className={theme === v ? 'on' : ''}
-              onClick={() => {
-                setTheme(v)
-                saveTheme(v)
-                applyTheme(v)
-              }}
+              onClick={() => onTheme(v)}
             >
               {t(`theme.${v}`)}
             </button>
@@ -269,6 +286,11 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, se
       <section className="card">
         <h2>{t('about.title')}</h2>
         <p className="small">{t('about.disclaimer')}</p>
+        <p className="small">
+          <a href={`./help.html?lang=${lang}#${lang}-disclaimer`} target="_blank" rel="noopener">
+            {t('help.disclaimerLink')}
+          </a>
+        </p>
         <h3>{t('about.sources')}</h3>
         <ul className="sources small">
           <li>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { describeError, isNetworkError } from '../errors.ts'
-import { syncAll, type ProfileAccess } from '../sync.ts'
+import { syncAll, type PrefsAccess, type ProfileAccess } from '../sync.ts'
 import type { DriveAccount } from './useGoogleAuth.ts'
 
 export interface SyncState {
@@ -13,7 +13,7 @@ export interface SyncState {
 }
 
 /** ログイン中は、記録を変えた時・ネットが戻った時・定期的に、Google ドライブと同期する */
-export function useSync(account: DriveAccount | null, profile: ProfileAccess, onRemoteChange: () => void): SyncState {
+export function useSync(account: DriveAccount | null, profile: ProfileAccess, prefs: PrefsAccess, onRemoteChange: () => void): SyncState {
   const [status, setStatus] = useState<SyncState['status']>('idle')
   const [lastSyncAt, setLastSyncAt] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -23,9 +23,11 @@ export function useSync(account: DriveAccount | null, profile: ProfileAccess, on
   const folderId = account?.folderId ?? null
   const onRemoteChangeRef = useRef(onRemoteChange)
   const profileRef = useRef(profile)
+  const prefsRef = useRef(prefs)
   useEffect(() => {
     onRemoteChangeRef.current = onRemoteChange
     profileRef.current = profile
+    prefsRef.current = prefs
   })
 
   const syncNow = useCallback(async () => {
@@ -41,7 +43,11 @@ export function useSync(account: DriveAccount | null, profile: ProfileAccess, on
     running.current = true
     setStatus('syncing')
     try {
-      await syncAll(folderId, { get: () => profileRef.current.get(), apply: (p) => profileRef.current.apply(p) })
+      await syncAll(
+        folderId,
+        { get: () => profileRef.current.get(), apply: (p) => profileRef.current.apply(p) },
+        { get: () => prefsRef.current.get(), apply: (v, s) => prefsRef.current.apply(v, s) },
+      )
       setStatus('idle')
       setError(null)
       setLastSyncAt(Date.now())

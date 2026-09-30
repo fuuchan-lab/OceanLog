@@ -1,7 +1,8 @@
 /** 画面の配色（ライト / ダーク）の選択。「自動」は端末の設定に合わせる */
 export type ThemePreference = 'auto' | 'light' | 'dark'
 
-const THEME_STORAGE_KEY = 'sealog-theme'
+// index.html の、画面を描く前に配色を反映する処理と同じキー
+export const THEME_STORAGE_KEY = 'oceanlog-theme'
 
 export function parseTheme(value: string | null | undefined): ThemePreference {
   return value === 'light' || value === 'dark' ? value : 'auto'

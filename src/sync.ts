@@ -5,6 +5,7 @@
  * - 航跡: 1回の航海ごとに track-<航跡ID>.json。記録を終えた航跡だけを送る。
  *   ドライブから消えた航跡（他の端末で削除）は、この端末からも消す。
  * - 出航地・ボート: profile.json。新しく変更したほうを残す。
+ * - 設定（単位・地図・海しるのキー・言語・配色）: prefs.json。まとまりごとに新しく変更したほうを残す。
  * どれも ID で突き合わせるので、何度送り直しても二重にならない。
  */
 import { deletePhoto, getAllPhotoInfo, markPhotoSynced, putPhoto, getPhoto, getAllMarks, getAllTracks, getPoints, markMarksSynced, putMark, putTrack, putTrackWithPoints, removeTrack } from './db.ts'
@@ -12,6 +13,7 @@ import { getDeviceId } from './device.ts'
 import { deleteFile, downloadBlob, downloadText, listFolderFiles, uploadFile } from './drive.ts'
 import { MARKS_FILE, TRACK_FILE, marksFileName, marksForDevice, mergeMarks, trackFileName } from './syncMerge.ts'
 import { loadSyncedProfileAt, parseProfile, referencedPhotoIds, saveSyncedProfileAt, type Profile } from './profile.ts'
+import { mergePrefs, parsePrefsFile, type Prefs, type PrefStamps, type PrefValues } from './prefs.ts'
 import type { Mark, MarksFile, TrackFile } from './types.ts'
 
 export interface ProfileAccess {
@@ -20,7 +22,14 @@ export interface ProfileAccess {
   apply: (p: Profile) => void
 }
 
+export interface PrefsAccess {
+  get: () => Prefs
+  /** ドライブのほうが新しかったまとまりを、端末に反映する */
+  apply: (values: Partial<PrefValues>, stamps: PrefStamps) => void
+}
+
 const PROFILE_FILE = 'profile.json'
+const PREFS_FILE = 'prefs.json'
 const PHOTO_FILE = /^photo-([0-9a-f-]{36})\.jpg$/
 const photoFileName = (id: string) => `photo-${id}.jpg`
 
@@ -35,10 +44,35 @@ const stripSynced = <T extends { synced?: boolean }>(x: T): Omit<T, 'synced'> =>
   return rest
 }
 
-export async function syncAll(folderId: string, profile: ProfileAccess): Promise<SyncResult> {
+export async function syncAll(folderId: string, profile: ProfileAccess, prefs: PrefsAccess): Promise<SyncResult> {
   const deviceId = getDeviceId()
   const files = await listFolderFiles(folderId)
   let changed = false
+
+  // --- 設定（単位・地図・海しるのキー・言語・配色）。まとまりごとに新しいほうを残す ---
+  const prefsFile = files.find((f) => f.name === PREFS_FILE)
+  let remotePrefs: ReturnType<typeof parsePrefsFile> | null = null
+  if (prefsFile) {
+    try {
+      remotePrefs = parsePrefsFile(JSON.parse(await downloadText(prefsFile.id)))
+    } catch (e) {
+      console.error('[sync-prefs-read]', e)
+    }
+  }
+  // 読めなかった時は、ドライブの設定を上書きしない
+  if (!prefsFile || remotePrefs) {
+    const merge = mergePrefs(prefs.get(), remotePrefs)
+    if (Object.keys(merge.apply).length > 0) prefs.apply(merge.apply, merge.stamps)
+    if (merge.upload) {
+      await uploadFile({
+        id: prefsFile?.id,
+        name: PREFS_FILE,
+        mimeType: 'application/json',
+        blob: new Blob([JSON.stringify(merge.upload)], { type: 'application/json' }),
+        parentId: folderId,
+      })
+    }
+  }
 
   // --- 出航地・ボート ---
   const profileFile = files.find((f) => f.name === PROFILE_FILE)

@@ -16,7 +16,7 @@ export default defineConfig({
       manifest: {
         name: '海ログ OceanLog',
         short_name: '海ログ',
-        description: '小型船舶・水上オートバイの航海ログ。現在地・航跡・潮汐・日の出日没・風・気圧・波',
+        description: 'ボート・水上バイクの航行支援アプリ。現在地・航跡・潮汐・日の出日没・風・気圧・波',
         lang: 'ja',
         id: './',
         display: 'standalone',
@@ -34,6 +34,8 @@ export default defineConfig({
       },
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // help.html はアプリ（SPA）ではない単独のページ。指定しないと、オフライン対応の仕組みがアプリの画面を返してしまう
+        navigateFallbackDenylist: [/\/help\.html(\?.*)?$/],
         runtimeCaching: [
           {
             urlPattern: TILE_HOSTS,

@@ -109,7 +109,7 @@ export function splitDuration(ms: number): { h: number; m: number } {
   return { h: Math.floor(total / 60), m: total % 60 }
 }
 
-/** 日の出・潮のボタンに「！」を付けるか: 出航地が危険潮位を下回っている・2時間以内に下回る */
+/** 日没・干満のボタンに「！」を付けるか: 出航地が危険潮位を下回っている・2時間以内に下回る */
 export function tideAlert(c: Crossing, now: number): boolean {
   return c.belowNow || (c.dropAt !== null && c.dropAt - now <= 120 * MIN)
 }

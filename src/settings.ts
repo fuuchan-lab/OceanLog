@@ -1,4 +1,4 @@
-/** この端末だけの設定（単位・地図など）。端末に保存する */
+/** 単位・地図などの設定。端末に保存し、ログイン中は Google ドライブの prefs.json で同じアカウントの端末と共通にする（prefs.ts） */
 import type { WindUnit } from './geo.ts'
 
 export type BaseLayer = 'osm' | 'gsi-pale' | 'gsi-photo' | 'gebco'
@@ -21,27 +21,32 @@ export const DEFAULT_SETTINGS: Settings = {
   customTileAttribution: '',
 }
 
-const KEY = 'oceanlog-settings'
+export const SETTINGS_KEY = 'oceanlog-settings'
 
 export function parseSettings(raw: string | null): Settings {
   if (!raw) return DEFAULT_SETTINGS
   try {
-    const v = JSON.parse(raw) as Partial<Settings>
-    return {
-      windUnit: v.windUnit === 'kn' || v.windUnit === 'kmh' ? v.windUnit : 'ms',
-      baseLayer: v.baseLayer === 'osm' || v.baseLayer === 'gsi-photo' || v.baseLayer === 'gebco' ? v.baseLayer : 'gsi-pale',
-      seamarks: v.seamarks !== false,
-      customTileUrl: typeof v.customTileUrl === 'string' ? v.customTileUrl : '',
-      customTileAttribution: typeof v.customTileAttribution === 'string' ? v.customTileAttribution : '',
-    }
+    return settingsFrom(JSON.parse(raw))
   } catch {
     return DEFAULT_SETTINGS
   }
 }
 
+export function settingsFrom(value: unknown): Settings {
+  if (typeof value !== 'object' || value === null) return DEFAULT_SETTINGS
+  const v = value as Partial<Settings>
+  return {
+    windUnit: v.windUnit === 'kn' || v.windUnit === 'kmh' ? v.windUnit : 'ms',
+    baseLayer: v.baseLayer === 'osm' || v.baseLayer === 'gsi-photo' || v.baseLayer === 'gebco' ? v.baseLayer : 'gsi-pale',
+    seamarks: v.seamarks !== false,
+    customTileUrl: typeof v.customTileUrl === 'string' ? v.customTileUrl : '',
+    customTileAttribution: typeof v.customTileAttribution === 'string' ? v.customTileAttribution : '',
+  }
+}
+
 export function loadSettings(): Settings {
   try {
-    return parseSettings(localStorage.getItem(KEY))
+    return parseSettings(localStorage.getItem(SETTINGS_KEY))
   } catch {
     return DEFAULT_SETTINGS
   }
@@ -49,7 +54,7 @@ export function loadSettings(): Settings {
 
 export function saveSettings(s: Settings) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(s))
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(s))
   } catch {
     // 保存できなくても、その回は反映される
   }

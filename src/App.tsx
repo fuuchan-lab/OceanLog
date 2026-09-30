@@ -25,16 +25,20 @@ import { loadProfile, saveProfile, upcomingRenewals, type Profile } from './prof
 import { portLevels, sunsetAlert, tideAlert, tideCrossing, waveRisk } from './safety.ts'
 import { sunTimes } from './sun.ts'
 import { usePortTide } from './hooks/usePortTide.ts'
-import { loadSettings, saveSettings, type Settings } from './settings.ts'
-import { loadMsil, saveMsil, type MsilSettings } from './msil.ts'
+import { loadSettings, saveSettings, SETTINGS_KEY, type Settings } from './settings.ts'
+import { loadMsil, MSIL_KEY, saveMsil, type MsilSettings } from './msil.ts'
+import { LANG_STORAGE_KEY, savedLang, type Lang } from './i18n/context.ts'
+import { loadPrefStamps, savePrefStamps, type PrefSection, type PrefStamps, type PrefValues } from './prefs.ts'
+import { applyTheme, loadTheme, saveTheme, THEME_STORAGE_KEY, type ThemePreference } from './theme.ts'
 import type { TrackPoint } from './types.ts'
 import { assessTrend } from './warning.ts'
 
 type View = Tab | 'log'
 
 export default function App() {
-  const { t, lang } = useI18n()
-  const [view, setView] = useState<View>('chart')
+  const { t, lang, setLang } = useI18n()
+  // ヘルプの「戻る」から来た時（#settings）は、設定の画面を開く
+  const [view, setView] = useState<View>(() => (location.hash === '#settings' ? 'settings' : 'chart'))
   const geo = useGeolocation()
   const fix = geo.fix
   const [settings, setSettingsState] = useState<Settings>(loadSettings)
@@ -57,15 +61,68 @@ export default function App() {
   )
 
   const [msil, setMsilState] = useState<MsilSettings>(loadMsil)
+  const [theme, setThemeState] = useState<ThemePreference>(loadTheme)
+
+  // 設定は、変えた日時をまとまりごとに記録して、Google ドライブの prefs.json で別の端末と共通にする
+  const prefStamps = useRef<PrefStamps>(loadPrefStamps({ settings: SETTINGS_KEY, msil: MSIL_KEY, lang: LANG_STORAGE_KEY, theme: THEME_STORAGE_KEY }))
+  const touchPref = (key: PrefSection) => {
+    prefStamps.current = { ...prefStamps.current, [key]: Date.now() }
+    savePrefStamps(prefStamps.current)
+    requestSync.current()
+  }
+  const prefValues = useRef<PrefValues>({ settings, msil, lang: savedLang(), theme })
+  prefValues.current = { settings, msil, lang: savedLang(), theme }
+
   const setMsil = (m: MsilSettings) => {
     setMsilState(m)
     saveMsil(m)
+    touchPref('msil')
   }
 
   const setSettings = (s: Settings) => {
     setSettingsState(s)
     saveSettings(s)
+    touchPref('settings')
   }
+
+  const chooseLang = (l: Lang) => {
+    setLang(l)
+    touchPref('lang')
+  }
+
+  const chooseTheme = (v: ThemePreference) => {
+    setThemeState(v)
+    saveTheme(v)
+    applyTheme(v)
+    touchPref('theme')
+  }
+
+  const setLangRef = useRef(setLang)
+  setLangRef.current = setLang
+  const prefsAccess = useMemo(
+    () => ({
+      get: () => ({ values: prefValues.current, stamps: prefStamps.current }),
+      apply: (values: Partial<PrefValues>, stamps: PrefStamps) => {
+        prefStamps.current = stamps
+        savePrefStamps(stamps)
+        if (values.settings) {
+          setSettingsState(values.settings)
+          saveSettings(values.settings)
+        }
+        if (values.msil) {
+          setMsilState(values.msil)
+          saveMsil(values.msil)
+        }
+        if (values.lang) setLangRef.current(values.lang)
+        if (values.theme) {
+          setThemeState(values.theme)
+          saveTheme(values.theme)
+          applyTheme(values.theme)
+        }
+      },
+    }),
+    [],
+  )
 
   /** 出航地・ボート・書類を変える。変えた日時を付けて保存し、同期する */
   const updateProfile = useCallback((update: (p: Profile) => Profile) => {
@@ -87,7 +144,7 @@ export default function App() {
     }),
     [],
   )
-  const sync = useSync(auth.account, profileAccess, () => void log.reload())
+  const sync = useSync(auth.account, profileAccess, prefsAccess, () => void log.reload())
   requestSync.current = sync.request
 
   const port = profile.ports.find((p) => p.id === profile.activePortId) ?? profile.ports[0] ?? null
@@ -110,7 +167,7 @@ export default function App() {
     (data?.marine ? waveRisk(data.marine.waves, profile.boat.dangerWave, Date.now()).level === 'warning' : false) ||
     (data?.weather ? assessTrend(data.weather.pressure, t, data.fetchedAt).level === 'warning' : false)
 
-  // 日の出・潮のボタンの「！」: 出航地の危険潮位が近い・日没が近い（日出から日没までの航行限定の船）
+  // 日没・干満のボタンの「！」: 出航地の危険潮位が近い・日没が近い（日出から日没までの航行限定の船）
   const portTide = usePortTide(port)
   const now = Date.now()
   const here = basis
@@ -220,6 +277,9 @@ export default function App() {
           here={fix}
           msil={msil}
           onMsil={setMsil}
+          onLang={chooseLang}
+          theme={theme}
+          onTheme={chooseTheme}
         />
       )}
 

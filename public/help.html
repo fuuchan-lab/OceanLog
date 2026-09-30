@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ヘルプ — 海ログ</title>
+    <link rel="icon" type="image/png" href="./favicon-32.png" />
+    <style>
+      /* 炎天下でも読みやすい、はっきりした配色（アプリと同じ考え方） */
+      :root {
+        --bg: #ffffff;
+        --card: #ffffff;
+        --text: #000000;
+        --muted: #333333;
+        --border: #000000;
+        --accent: #0033a0;
+        --tip-bg: #e6f4ea;
+        --tip-text: #0b4a1e;
+        --note-bg: #fff3c4;
+        --note-text: #4a3500;
+        --warn-bg: #ffe3e0;
+        --warn-text: #7a0b00;
+        color-scheme: light dark;
+      }
+      :root[data-theme='dark'] {
+        --bg: #000000;
+        --card: #0d0d0d;
+        --text: #ffffff;
+        --muted: #d0d0d0;
+        --border: #8a8a8a;
+        --accent: #5cc8ff;
+        --tip-bg: #06301a;
+        --tip-text: #c8f5d6;
+        --note-bg: #3a2c00;
+        --note-text: #ffe8a0;
+        --warn-bg: #3d0a05;
+        --warn-text: #ffd0c8;
+        color-scheme: dark;
+      }
+      :root[data-theme='light'] { color-scheme: light; }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --bg: #000000;
+          --card: #0d0d0d;
+          --text: #ffffff;
+          --muted: #d0d0d0;
+          --border: #8a8a8a;
+          --accent: #5cc8ff;
+          --tip-bg: #06301a;
+          --tip-text: #c8f5d6;
+          --note-bg: #3a2c00;
+          --note-text: #ffe8a0;
+          --warn-bg: #3d0a05;
+          --warn-text: #ffd0c8;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+        font-size: 1.05rem;
+        line-height: 1.75;
+        overflow-wrap: anywhere;
+      }
+      main { max-width: 760px; margin: 0 auto; padding: 16px 16px 64px; }
+      .back-button {
+        flex: none;
+        margin-left: auto;
+        font: inherit;
+        font-weight: 700;
+        min-height: 44px;
+        padding: 0 20px;
+        border: 2px solid var(--border);
+        border-radius: 999px;
+        background: var(--card);
+        color: var(--accent);
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+      .back-button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+      header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+      header img { width: 56px; height: 56px; border-radius: 14px; }
+      header > div { min-width: 0; }
+      .eyebrow { color: var(--muted); font-size: 0.85rem; font-weight: 700; }
+      h1 { font-size: 1.5rem; margin: 0; line-height: 1.3; }
+      .lang-switch { margin: 8px 0 16px; font-size: 0.95rem; }
+      a { color: var(--accent); }
+      nav.toc, section {
+        background: var(--card);
+        border: 2px solid var(--border);
+        border-radius: 14px;
+        padding: 6px 18px 14px;
+        margin-bottom: 16px;
+      }
+      nav.toc ol { padding-left: 1.4em; margin: 6px 0; }
+      h2 { font-size: 1.2rem; margin: 14px 0 6px; }
+      h3 { font-size: 1.02rem; margin: 14px 0 4px; }
+      p, li { margin: 4px 0; }
+      ul, ol { padding-left: 1.4em; }
+      .tip, .note, .warn { border-radius: 10px; padding: 8px 12px; margin: 10px 0; }
+      .tip { background: var(--tip-bg); color: var(--tip-text); }
+      .note { background: var(--note-bg); color: var(--note-text); }
+      .warn { background: var(--warn-bg); color: var(--warn-text); font-weight: 600; }
+      section.disclaimer { border-color: #c21807; border-width: 3px; }
+      kbd {
+        display: inline-block;
+        padding: 0 6px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font: inherit;
+        font-size: 0.92em;
+        white-space: nowrap;
+      }
+      table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+      th, td { border: 1px solid var(--border); padding: 4px 8px; text-align: left; vertical-align: top; }
+      [hidden] { display: none !important; }
+      .back { display: inline-block; margin-top: 8px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <!-- ========== 日本語 ========== -->
+      <div id="ja" lang="ja">
+        <header>
+          <img src="./icon-192.png" alt="" />
+          <div>
+            <div class="eyebrow">ボート・水上バイクの航行支援アプリ</div>
+            <h1>海ログ ヘルプ</h1>
+          </div>
+          <button type="button" class="back-button">戻る</button>
+        </header>
+        <p class="lang-switch">English: <a href="?lang=en">Help in English</a></p>
+
+        <p class="warn">
+          海ログは航行を<strong>支援する</strong>ためのアプリです。航海の安全を保証するものではありません。
+          ご利用の前に、必ず最後の「<a href="#ja-disclaimer">免責事項</a>」をお読みください。
+        </p>
+
+        <nav class="toc" aria-label="目次">
+          <h2>目次</h2>
+          <ol>
+            <li><a href="#ja-start">はじめに（最初の準備）</a></li>
+            <li><a href="#ja-screens">画面の見方（下のメニュー）</a></li>
+            <li><a href="#ja-port">出航地（マザーポート）を登録する</a></li>
+            <li><a href="#ja-boat">ボート・免許を登録する（資格・船舶）</a></li>
+            <li><a href="#ja-voyage">出港する・帰港する（航行モード）</a></li>
+            <li><a href="#ja-alerts">「！」の警告の意味</a></li>
+            <li><a href="#ja-chart">海図の使い方（オフライン保存・暗岩・コンパス）</a></li>
+            <li><a href="#ja-msil">海しる（海上保安庁）を使う</a></li>
+            <li><a href="#ja-drive">記録の保存・別の端末で使う・書き出し</a></li>
+            <li><a href="#ja-trouble">困ったとき</a></li>
+            <li><a href="#ja-disclaimer"><strong>免責事項</strong></a></li>
+          </ol>
+        </nav>
+
+        <section id="ja-start">
+          <h2>1. はじめに（最初の準備）</h2>
+          <h3>① アプリを開く・ホーム画面に置く</h3>
+          <p>
+            スマホのブラウザ（iPhone は Safari、Android は Chrome）で
+            <a href="https://oceanlog.doitmyself.net/">https://oceanlog.doitmyself.net/</a> を開きます。
+            iPhone は共有ボタン →「ホーム画面に追加」、Android はメニュー →「ホーム画面に追加」（アプリをインストール）で、アプリと同じように使えます。
+          </p>
+          <h3>② 位置情報を許可する</h3>
+          <p>現在地・航跡・コンパスのため、位置情報の利用を「許可」してください。iPhone のコンパスは、海図の「コンパスを使う」を押して許可します。</p>
+          <h3>③ Google にログインする（おすすめ）</h3>
+          <p>
+            <kbd>⚙ 設定</kbd> →「Google でログイン」。記録・出航地・ボート・書類の写真・設定が、あなたの Google ドライブの「OceanLog」フォルダーに保存されます。
+            機種変更や、スマホとタブレットの両方で使う時も、同じアカウントでログインすれば同じ内容が使えます。
+          </p>
+          <h3>④ 出航地とボートを登録する</h3>
+          <p>下の 3・4 の手順で、よく使う出航地と、ボートの情報を登録しておくと、警告が役に立つようになります。</p>
+        </section>
+
+        <section id="ja-screens">
+          <h2>2. 画面の見方（下のメニュー）</h2>
+          <table>
+            <tr><th>海図</th><td>現在地・航跡・記録した地点・海図記号・危険物を表示。<kbd>出港</kbd> で航行モードを始めます。</td></tr>
+            <tr><th>波・気象</th><td>安全の目安（帰港の目安・波の危険・注意報警報）、風（Windy）、波、天気・気圧の変化、現在地。</td></tr>
+            <tr><th>日没・干満</th><td>日の出・日の入り、月齢・潮の呼び名（大潮など）、満潮・干潮の時刻と潮位のグラフ、危険潮位までの時間。</td></tr>
+            <tr><th>資格・船舶</th><td>船名・船の写真・大きさ・定員・馬力、船舶検査手帳と免許証の写真、次回の船検と免許の更新日。</td></tr>
+            <tr><th>設定</th><td>ログイン、出航地、単位、海しる、地図、言語、配色、このヘルプ。</td></tr>
+          </table>
+          <div class="tip">
+            海にいない時は、天気・潮・日の出は<strong>選んでいる出航地</strong>の情報です。<kbd>出港</kbd> を押した後は<strong>現在地</strong>の情報に変わります（画面の上に「📍 どこの情報か」を表示します）。
+          </div>
+        </section>
+
+        <section id="ja-port">
+          <h2>3. 出航地（マザーポート）を登録する</h2>
+          <ol>
+            <li><kbd>⚙ 設定</kbd> →「出航地（マザーポート）」→ <kbd>＋ 出航地を追加</kbd>。</li>
+            <li>名前（例: 〇〇マリーナ）を入れ、地図を動かして、真ん中の <kbd>＋</kbd> を桟橋・スロープに合わせます。地名・住所で探すこともできます。</li>
+            <li><strong>干潮危険潮位</strong>: これより潮が引くと、桟橋・スロープが使いにくくなる潮位（cm、潮位表と同じ基準）。</li>
+            <li><strong>Z0（平均水面の高さ）</strong>: 潮位表の基準から平均水面までの高さ（cm）。海上保安庁の潮汐表などで確かめられます。分からなければ 0 のままにします（その場合、潮位は平均水面からの高さの目安になります）。</li>
+          </ol>
+          <p>複数登録でき、丸印で「いま使う出航地」を選びます。</p>
+        </section>
+
+        <section id="ja-boat">
+          <h2>4. ボート・免許を登録する（資格・船舶）</h2>
+          <ul>
+            <li>種類（小型船舶 / 水上オートバイ）、船名（例: 〇〇丸）、船の写真を登録できます。</li>
+            <li><strong>船舶検査手帳・免許証</strong>は、<kbd>📷</kbd> で撮影すると、四隅を合わせて真っすぐに直します。文字を読み取って、船名・長さ・幅・定員・馬力・次回の検査・免許の種類・有効期限を入力欄に入れます。<strong>読み取りは間違えることがあるので、必ず確かめて直してください。</strong></li>
+            <li><strong>最高速度</strong>から帰港にかかる時間の目安（最高速度の7割で計算）を、<strong>危険な波の高さ</strong>から波の警告を出します。</li>
+            <li>船舶検査証書の航行区域の条件に「日出から日没まで」がある場合は、<strong>「航行時間の制限: 日出から日没までに限る」</strong>に印を付けます。日没の警告が出るようになります。</li>
+            <li>次回の船舶検査・免許の更新日の<strong>1か月前</strong>から、お知らせを出し、<kbd>資格・船舶</kbd> に「！」が付きます。</li>
+          </ul>
+        </section>
+
+        <section id="ja-voyage">
+          <h2>5. 出港する・帰港する（航行モード）</h2>
+          <ol>
+            <li>海図の <kbd>出港</kbd> を押し、出航地を確かめて <kbd>出港する</kbd>。これで<strong>航行モード</strong>になり、航跡の記録が始まります。</li>
+            <li>航行モードの間は、<strong>1分ごと</strong>に位置を点で記録し、画面が消えないようにします。</li>
+            <li>出港した場所から 300m 以上離れた後、100m 以内に戻ってくると、<strong>自動で帰港</strong>（記録を終了）します。</li>
+            <li>別の港に帰った時などは、<kbd>帰港（航行モード終了）</kbd> を押して終えます。</li>
+          </ol>
+          <div class="note">
+            ウェブアプリのため、<strong>記録できるのはアプリを開いている間だけ</strong>です。ほかのアプリに切り替えたり、画面を消したりした間は記録されず、その間は点線でつなぎます。長い航行では、充電しながらご利用ください。
+          </div>
+          <p>海図の <kbd>地点を記録</kbd> で、釣り場・錨泊地・危険な場所・暗岩・洗岩などを記録できます。</p>
+        </section>
+
+        <section id="ja-alerts">
+          <h2>6. 「！」の警告の意味</h2>
+          <table>
+            <tr><th>波・気象 の「！」</th><td>気象庁の注意報・警報が出ている / 予報の波が、登録した危険な波の高さを超えそう / 気圧が急に下がっている。</td></tr>
+            <tr><th>日没・干満 の「！」</th><td>出航地の潮位が干潮危険潮位を下回っている、または2時間以内に下回る / 日没まで2時間を切った（「日出から日没まで」の船だけ）。</td></tr>
+            <tr><th>資格・船舶 の「！」</th><td>船舶検査・免許の更新が1か月以内、または期限切れ。</td></tr>
+            <tr><th>危険物</th><td>航行モード中に、記録した暗岩・洗岩や OpenSeaMap の危険物まで 500m 以内で注意、150m 以内で警告。</td></tr>
+          </table>
+          <div class="note">
+            警告は予報・計算による<strong>目安</strong>です。警告が出ていないことは、安全であることを意味しません。
+          </div>
+        </section>
+
+        <section id="ja-chart">
+          <h2>7. 海図の使い方</h2>
+          <h3>地図の種類</h3>
+          <p>海図右上の <kbd>地図の種類</kbd> で、地理院地図・航空写真・OpenStreetMap・水深（GEBCO）を切り替え、海図記号（OpenSeaMap）を重ねられます。</p>
+          <h3>オフライン用に保存</h3>
+          <p>出港前に <kbd>⬇️</kbd> で、近辺の地図と海図記号を端末に保存できます。沖で電波がなくても、保存した範囲は表示できます。Wi-Fi のある場所での保存をおすすめします。</p>
+          <h3>暗岩・洗岩など</h3>
+          <p>自分で記録した暗岩・洗岩と、OpenSeaMap に登録された暗岩・洗岩・干出岩・沈船・障害物を、海図記号に近い形で表示します。日本は登録が少ないため、<strong>表示されていない岩もあります</strong>。</p>
+          <h3>コンパス</h3>
+          <p>左下の方位盤で、スマホの上端が向いている方角（磁方位、赤い三角）と、GPS の進行方向（COG、青い三角）を表示します。スマホのコンパスは、磁石や金属・エンジンの近くでずれます。</p>
+        </section>
+
+        <section id="ja-msil">
+          <h2>8. 海しる（海上保安庁）を使う</h2>
+          <p>海上保安庁の「海しる」の情報を、海図に重ねられます（任意）。利用登録は、使う人がそれぞれ行います。</p>
+          <ol>
+            <li><a href="https://portal.msil.go.jp/" target="_blank" rel="noopener">海しる API の開発者ポータル</a>でサインアップし、利用規約に同意します。</li>
+            <li>利用する API を申し込み（サブスクライブ）、プロフィールでキー（主キー）をコピーします。</li>
+            <li><kbd>⚙ 設定</kbd> →「海しる（海上保安庁）」の「API キー」に貼り付けて保存します。</li>
+            <li>「地図に重ねる項目」に、項目の名前と API の URL（…/MapServer）を追加します。</li>
+          </ol>
+          <p>キーは端末と、ログイン中はあなたの Google ドライブにも保存され、同じアカウントの別の端末でもそのまま使えます。キーはほかの人に教えないでください。</p>
+        </section>
+
+        <section id="ja-drive">
+          <h2>9. 記録の保存・別の端末で使う・書き出し</h2>
+          <ul>
+            <li>記録は、まず端末に保存し、ログイン中は Google ドライブの「OceanLog」フォルダーと自動で同期します。電波がない時も記録でき、つながった時に送ります。</li>
+            <li>同じ Google アカウントでログインした端末では、航跡・地点・出航地・ボート・書類の写真・設定（単位・地図・海しるのキー・言語・配色）が共通になります。</li>
+            <li>海図の下の <kbd>📒 記録一覧・書き出し</kbd> から、航跡・地点を GPX・KML・CSV・GeoJSON で書き出せます（ほかの航海アプリや Google Earth で開けます）。</li>
+            <li>データは、あなたの端末とあなたの Google ドライブだけに保存します。作成者のサーバーには送りません。</li>
+          </ul>
+        </section>
+
+        <section id="ja-trouble">
+          <h2>10. 困ったとき</h2>
+          <ul>
+            <li><strong>現在地が出ない</strong>: 端末の位置情報がオンか、ブラウザに位置情報を許可しているか確かめます。屋内や船室では GPS が届きにくくなります。</li>
+            <li><strong>コンパスが動かない・ずれる</strong>: iPhone は「コンパスを使う」を押して許可します。端末を8の字に動かすと、ずれが直ることがあります。</li>
+            <li><strong>天気・潮が出ない</strong>: 電波を確かめ、<kbd>更新</kbd> を押します。沖では電波が届かないことがあります。</li>
+            <li><strong>ログインできない</strong>: ほかのアプリの中ではなく、Safari・Chrome で直接開いてください。</li>
+            <li><strong>海しるが表示されない</strong>: キーと URL を確かめます。海しる側の都合で使えない場合もあります。</li>
+          </ul>
+        </section>
+
+        <section id="ja-disclaimer" class="disclaimer">
+          <h2>11. 免責事項</h2>
+          <p>海ログ（OceanLog、以下「本アプリ」）をご利用になる前に、次の内容をお読みください。本アプリを利用した時点で、次の内容に同意したものとみなします。</p>
+          <ol>
+            <li><strong>航行支援のためのアプリです。</strong>本アプリは、ボート・水上オートバイの航行を補助する目的で作られています。<strong>航海の安全を保証するものではありません。</strong></li>
+            <li><strong>公式の情報の代わりにはなりません。</strong>本アプリの海図・水深・危険物・潮位・気象・波・日の出日没・警告などは、公開されている予報・データや端末での計算による目安であり、正確さ・完全さ・最新であることを保証しません。航海には、海上保安庁の海図・潮汐表・航行警報、気象庁の気象情報・注意報・警報など、公式の情報を必ずお使いください。</li>
+            <li><strong>表示されない危険があります。</strong>暗岩・浅瀬・障害物・定置網・他の船などは、本アプリに表示されないことがあります。警告が出ていないことは、安全であることを意味しません。</li>
+            <li><strong>端末・通信の制約があります。</strong>GPS・コンパスの誤差、電波の途切れ、電池切れ、端末の故障、アプリ・ブラウザの不具合、外部サービスの停止などにより、情報が表示されない・遅れる・誤ることがあります。本アプリだけに頼らないでください。</li>
+            <li><strong>判断と責任は船長にあります。</strong>出航・航行・帰港の判断、見張り、法令（船舶職員及び小型船舶操縦者法・海上衝突予防法・港則法など）と船舶検査証書の条件を守ることは、船長（操縦者）の責任です。操船中にスマホを操作しないでください。</li>
+            <li><strong>作成者は責任を負いません。</strong>本アプリの情報の誤り・欠落・遅れ、利用者による情報の読み違い・誤った解釈・入力の誤り、文字の読み取り（OCR）の誤り、記録やデータの消失、その他本アプリの利用または利用できなかったことにより生じた、事故・損害・損失について、作成者は一切の責任を負いません。</li>
+            <li><strong>外部のサービス。</strong>本アプリは Open-Meteo・気象庁・国土地理院・OpenStreetMap・OpenSeaMap・GEBCO・Windy・海しる（海上保安庁）・Google などの外部サービスを利用しています。これらの内容は各提供者によるもので、作成者は保証しません。海しるの情報は、海上保安庁によって保証されたものではありません。</li>
+            <li><strong>予告なく変更・停止することがあります。</strong>本アプリは無料で提供しており、内容の変更や、提供の停止をすることがあります。</li>
+          </ol>
+        </section>
+        <a class="back" href="./">← アプリに戻る</a>
+      </div>
+
+      <!-- ========== English ========== -->
+      <div id="en" lang="en">
+        <header>
+          <img src="./icon-192.png" alt="" />
+          <div>
+            <div class="eyebrow">Navigation aid for boats &amp; personal watercraft</div>
+            <h1>OceanLog Help</h1>
+          </div>
+          <button type="button" class="back-button">Back</button>
+        </header>
+        <p class="lang-switch">日本語: <a href="?lang=ja">日本語のヘルプ</a></p>
+
+        <p class="warn">
+          OceanLog is a navigation <strong>aid</strong>. It does not guarantee safe navigation.
+          Please read the <a href="#en-disclaimer">Disclaimer</a> at the end before use.
+        </p>
+
+        <nav class="toc" aria-label="Contents">
+          <h2>Contents</h2>
+          <ol>
+            <li><a href="#en-start">Getting started</a></li>
+            <li><a href="#en-screens">Screens (bottom menu)</a></li>
+            <li><a href="#en-port">Home ports</a></li>
+            <li><a href="#en-boat">Boat &amp; license</a></li>
+            <li><a href="#en-voyage">Departing and returning (underway mode)</a></li>
+            <li><a href="#en-alerts">What the "！" marks mean</a></li>
+            <li><a href="#en-chart">Chart (offline, rocks, compass)</a></li>
+            <li><a href="#en-msil">MSIL (Japan Coast Guard)</a></li>
+            <li><a href="#en-drive">Saving, other devices, export</a></li>
+            <li><a href="#en-trouble">Troubleshooting</a></li>
+            <li><a href="#en-disclaimer"><strong>Disclaimer</strong></a></li>
+          </ol>
+        </nav>
+
+        <section id="en-start">
+          <h2>1. Getting started</h2>
+          <ul>
+            <li>Open <a href="https://oceanlog.doitmyself.net/">https://oceanlog.doitmyself.net/</a> in Safari (iPhone) or Chrome (Android) and add it to your home screen.</li>
+            <li>Allow location access. On iPhone, tap "Use compass" on the chart to allow the compass.</li>
+            <li>Sign in with Google in <kbd>Settings</kbd> (recommended). Records, home ports, boat, document photos and settings are saved in the "OceanLog" folder of your Google Drive and shared with your other devices.</li>
+            <li>Register your home ports and boat (sections 3 and 4) so the warnings work.</li>
+          </ul>
+        </section>
+
+        <section id="en-screens">
+          <h2>2. Screens (bottom menu)</h2>
+          <table>
+            <tr><th>Chart</th><td>Position, tracks, marks, seamarks and hazards. <kbd>Depart</kbd> starts underway mode.</td></tr>
+            <tr><th>Sea &amp; weather</th><td>Safety summary, wind (Windy), waves, weather and pressure trend, position.</td></tr>
+            <tr><th>Sunset &amp; tides</th><td>Sunrise/sunset, moon, high and low tides, time until the danger tide level.</td></tr>
+            <tr><th>Boat &amp; license</th><td>Boat details and photo, inspection book and license photos, renewal dates.</td></tr>
+            <tr><th>Settings</th><td>Sign-in, home ports, units, MSIL, map, language, colors and this help.</td></tr>
+          </table>
+          <div class="tip">Before departing, weather, tide and sun use the <strong>selected home port</strong>. After <kbd>Depart</kbd>, they use your <strong>current position</strong>.</div>
+        </section>
+
+        <section id="en-port">
+          <h2>3. Home ports</h2>
+          <p><kbd>Settings</kbd> → Home ports → <kbd>＋ Add a home port</kbd>. Move the map so the center <kbd>＋</kbd> is on your pier or slipway. Set the <strong>danger low-tide level</strong> (cm, chart datum) below which the pier or slipway is hard to use, and <strong>Z0</strong> (height of mean sea level above chart datum, cm; leave 0 if unknown).</p>
+        </section>
+
+        <section id="en-boat">
+          <h2>4. Boat &amp; license</h2>
+          <ul>
+            <li>Take photos of the inspection book and license with <kbd>📷</kbd>. The corners are straightened and the text is read (OCR) to fill in the fields. <strong>OCR can be wrong — always check.</strong></li>
+            <li><strong>Max speed</strong> is used to estimate return time (70% of max speed); <strong>danger wave height</strong> for wave warnings.</li>
+            <li>Tick <strong>"Operating time limited to sunrise–sunset"</strong> if your inspection certificate limits navigation to sunrise–sunset; you will then get sunset warnings.</li>
+            <li>You are notified from <strong>one month</strong> before inspection or license renewal.</li>
+          </ul>
+        </section>
+
+        <section id="en-voyage">
+          <h2>5. Departing and returning (underway mode)</h2>
+          <ul>
+            <li>Tap <kbd>Depart</kbd> to start underway mode. Your position is recorded as a dot <strong>every minute</strong>.</li>
+            <li>After moving more than 300 m away, coming back within 100 m of the departure point ends the voyage automatically. To end elsewhere, tap <kbd>Return (end underway mode)</kbd>.</li>
+          </ul>
+          <div class="note">As a web app, it records <strong>only while the app is open</strong>. Gaps are shown as dotted lines.</div>
+        </section>
+
+        <section id="en-alerts">
+          <h2>6. What the "！" marks mean</h2>
+          <ul>
+            <li><strong>Sea &amp; weather</strong>: JMA advisories/warnings, waves forecast above your danger height, or a rapid pressure drop.</li>
+            <li><strong>Sunset &amp; tides</strong>: the tide at your home port is (or within 2 hours will be) below the danger level, or sunset is within 2 hours (daylight-only boats).</li>
+            <li><strong>Boat &amp; license</strong>: renewal within one month or overdue.</li>
+            <li><strong>Hazards</strong>: in underway mode, caution within 500 m and warning within 150 m of known rocks and hazards.</li>
+          </ul>
+          <div class="note">Warnings are estimates. No warning does not mean it is safe.</div>
+        </section>
+
+        <section id="en-chart">
+          <h2>7. Chart</h2>
+          <ul>
+            <li><kbd>Map type</kbd> switches GSI maps, aerial photos, OpenStreetMap and GEBCO depth, and overlays OpenSeaMap seamarks.</li>
+            <li><kbd>⬇️</kbd> saves the nearby charts for offline use before departure.</li>
+            <li>Rocks and hazards from your own marks and OpenSeaMap are shown. Coverage in Japan is sparse; <strong>not all rocks are shown</strong>.</li>
+            <li>The compass shows the magnetic heading of the top of the phone (red) and GPS course over ground (blue). It is affected by magnets, metal and engines.</li>
+          </ul>
+        </section>
+
+        <section id="en-msil">
+          <h2>8. MSIL (Japan Coast Guard)</h2>
+          <p>Optional. Each user registers at the <a href="https://portal.msil.go.jp/" target="_blank" rel="noopener">MSIL API developer portal</a>, subscribes, copies their key and pastes it in <kbd>Settings</kbd> → MSIL, then adds items (MapServer URLs). The key is saved on the device and, when signed in, in your Google Drive. Do not share your key.</p>
+        </section>
+
+        <section id="en-drive">
+          <h2>9. Saving, other devices, export</h2>
+          <ul>
+            <li>Records are saved on the device and synced with your Google Drive when signed in (also after being offline).</li>
+            <li>Devices signed in with the same account share tracks, marks, home ports, boat, document photos and settings.</li>
+            <li>Export tracks and marks as GPX, KML, CSV or GeoJSON from <kbd>📒 Records &amp; export</kbd> below the chart.</li>
+            <li>Data is stored only on your devices and in your Google Drive; nothing is sent to the author's servers.</li>
+          </ul>
+        </section>
+
+        <section id="en-trouble">
+          <h2>10. Troubleshooting</h2>
+          <ul>
+            <li>No position: check location settings and browser permission. GPS is weak indoors or in a cabin.</li>
+            <li>Compass wrong: on iPhone tap "Use compass"; move the phone in a figure 8 to recalibrate.</li>
+            <li>No weather or tide: check the signal and tap <kbd>Refresh</kbd>.</li>
+            <li>Cannot sign in: open the page directly in Safari or Chrome, not inside another app.</li>
+          </ul>
+        </section>
+
+        <section id="en-disclaimer" class="disclaimer">
+          <h2>11. Disclaimer</h2>
+          <p>By using OceanLog ("the app") you agree to the following.</p>
+          <ol>
+            <li><strong>Navigation aid only.</strong> The app is made to assist navigation of boats and personal watercraft. <strong>It does not guarantee safe navigation.</strong></li>
+            <li><strong>Not a substitute for official information.</strong> Charts, depth, hazards, tides, weather, waves, sun times and warnings are estimates based on public forecasts, data and on-device calculation, and are not guaranteed to be accurate, complete or up to date. Always use official nautical charts, tide tables, navigational warnings and weather warnings.</li>
+            <li><strong>Hazards may not be shown.</strong> Rocks, shallows, obstacles, fishing nets and other vessels may not appear. No warning does not mean it is safe.</li>
+            <li><strong>Device and network limits.</strong> GPS and compass errors, loss of signal, battery, device failure, software bugs or outages of external services may cause information to be missing, late or wrong. Do not rely on the app alone.</li>
+            <li><strong>The skipper is responsible.</strong> Decisions to depart, navigate and return, keeping a lookout, and complying with laws and the conditions of your inspection certificate are the skipper's responsibility. Do not operate your phone while steering.</li>
+            <li><strong>No liability.</strong> The author accepts no liability for any accident, damage or loss arising from errors, omissions or delays in the information, misreading or misinterpretation by the user, input or OCR errors, loss of data, or the use of or inability to use the app.</li>
+            <li><strong>External services.</strong> Content from Open-Meteo, JMA, GSI, OpenStreetMap, OpenSeaMap, GEBCO, Windy, MSIL (Japan Coast Guard), Google and others belongs to their providers and is not guaranteed by the author. MSIL information is not guaranteed by the Japan Coast Guard.</li>
+            <li><strong>Changes.</strong> The app is provided free of charge and may be changed or discontinued without notice.</li>
+          </ol>
+        </section>
+        <a class="back" href="./">← Back to the app</a>
+      </div>
+    </main>
+    <script>
+      // アプリの言語（?lang=ja / ?lang=en）のヘルプだけを表示する。指定が無ければ、端末の言語で決める（LeadLog と同じ）
+      ;(function () {
+        var param = new URLSearchParams(location.search).get('lang')
+        var lang = param === 'en' || param === 'ja' ? param : (navigator.language || '').toLowerCase().indexOf('ja') === 0 ? 'ja' : 'en'
+        document.getElementById(lang === 'en' ? 'ja' : 'en').hidden = true
+        document.documentElement.lang = lang
+        document.title = lang === 'en' ? 'Help — OceanLog' : 'ヘルプ — 海ログ'
+        // アプリで選んだ配色（ライト / ダーク）に合わせる
+        try {
+          var theme = localStorage.getItem('oceanlog-theme')
+          if (theme === 'light' || theme === 'dark') document.documentElement.setAttribute('data-theme', theme)
+        } catch (e) {}
+
+        // 「戻る」: 別のタブで開いている時は、そのタブを閉じる。閉じられない時は、アプリの設定の画面に移る
+        var backs = document.querySelectorAll('.back-button')
+        for (var i = 0; i < backs.length; i++) {
+          backs[i].addEventListener('click', function () {
+            window.close()
+            setTimeout(function () {
+              location.href = './#settings'
+            }, 250)
+          })
+        }
+      })()
+    </script>
+  </body>
+</html>

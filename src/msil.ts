@@ -1,7 +1,7 @@
 /**
  * 海しる（海洋状況表示システム、海上保安庁）の公開 API。
  * 使う人がそれぞれ開発者ポータル（https://portal.msil.go.jp/）で利用登録して、自分のキー（サブスクリプションキー）を
- * 設定に入れる。キーはこの端末にだけ保存し、Google ドライブには送らない。
+ * 設定に入れる。キーは端末に保存し、ログイン中は自分の Google ドライブ（prefs.json）にも保存して、同じアカウントの端末で共通にする。
  * 地図に重ねる項目は、ArcGIS の MapServer の export（PNG）を使う。
  * 利用規約により、使う時は「海しるAPIを利用して取得した情報を基に作成しているが、サービスの内容は海上保安庁によって保証されたものではない」旨を表示する
  */
@@ -25,28 +25,33 @@ export interface MsilSettings {
 
 export const EMPTY_MSIL: MsilSettings = { key: '', layers: [], enabled: [] }
 
-const KEY = 'oceanlog-msil'
+export const MSIL_KEY = 'oceanlog-msil'
 
 export function parseMsil(raw: string | null): MsilSettings {
   if (!raw) return EMPTY_MSIL
   try {
-    const v = JSON.parse(raw) as Partial<MsilSettings>
-    const layers = Array.isArray(v.layers)
-      ? v.layers.filter((l): l is MsilLayer => typeof l?.id === 'string' && typeof l.name === 'string' && isMsilUrl(l.url))
-      : []
-    return {
-      key: typeof v.key === 'string' ? v.key.trim() : '',
-      layers,
-      enabled: Array.isArray(v.enabled) ? v.enabled.filter((id): id is string => layers.some((l) => l.id === id)) : [],
-    }
+    return msilFrom(JSON.parse(raw))
   } catch {
     return EMPTY_MSIL
   }
 }
 
+export function msilFrom(value: unknown): MsilSettings {
+  if (typeof value !== 'object' || value === null) return EMPTY_MSIL
+  const v = value as Partial<MsilSettings>
+  const layers = Array.isArray(v.layers)
+    ? v.layers.filter((l): l is MsilLayer => typeof l?.id === 'string' && typeof l.name === 'string' && isMsilUrl(l.url))
+    : []
+  return {
+    key: typeof v.key === 'string' ? v.key.trim() : '',
+    layers,
+    enabled: Array.isArray(v.enabled) ? v.enabled.filter((id): id is string => layers.some((l) => l.id === id)) : [],
+  }
+}
+
 export function loadMsil(): MsilSettings {
   try {
-    return parseMsil(localStorage.getItem(KEY))
+    return parseMsil(localStorage.getItem(MSIL_KEY))
   } catch {
     return EMPTY_MSIL
   }
@@ -54,7 +59,7 @@ export function loadMsil(): MsilSettings {
 
 export function saveMsil(s: MsilSettings) {
   try {
-    localStorage.setItem(KEY, JSON.stringify(s))
+    localStorage.setItem(MSIL_KEY, JSON.stringify(s))
   } catch {
     // 保存できなくても、その回は使える
   }

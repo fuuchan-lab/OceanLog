@@ -13,7 +13,7 @@ export interface I18n {
   t: TFn
 }
 
-const STORAGE_KEY = 'oceanlog-language'
+export const LANG_STORAGE_KEY = 'oceanlog-language'
 
 export const LOCALES: Record<Lang, string> = { ja: 'ja-JP', en: 'en-US' }
 
@@ -24,18 +24,24 @@ export function translate(lang: Lang, key: MessageKey, vars?: Vars): string {
 
 /** 保存済みの選択があればそれを、なければ端末の言語（日本語以外は英語）を使う（CapLog と同じ） */
 export function detectLang(): Lang {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved === 'ja' || saved === 'en') return saved
-  } catch {
-    // 読めなければ端末の言語で決める
-  }
+  const saved = savedLang()
+  if (saved) return saved
   return navigator.language.toLowerCase().startsWith('ja') ? 'ja' : 'en'
+}
+
+/** 自分で選んだ言語。選んでいなければ null */
+export function savedLang(): Lang | null {
+  try {
+    const saved = localStorage.getItem(LANG_STORAGE_KEY)
+    return saved === 'ja' || saved === 'en' ? saved : null
+  } catch {
+    return null
+  }
 }
 
 export function saveLang(lang: Lang) {
   try {
-    localStorage.setItem(STORAGE_KEY, lang)
+    localStorage.setItem(LANG_STORAGE_KEY, lang)
   } catch {
     // 保存できなくても、その回の表示は切り替わる
   }

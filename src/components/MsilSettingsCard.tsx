@@ -13,6 +13,12 @@ export function MsilSettingsCard({ msil, onChange }: { msil: MsilSettings; onCha
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
   const [saved, setSaved] = useState(false)
+  // 別の端末で入れたキーをドライブから読み込んだ時は、入力欄も合わせる
+  const [keyFrom, setKeyFrom] = useState(msil.key)
+  if (keyFrom !== msil.key) {
+    setKeyFrom(msil.key)
+    setKey(msil.key)
+  }
 
   return (
     <section className="card">

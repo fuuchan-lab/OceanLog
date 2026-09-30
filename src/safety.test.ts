@@ -54,7 +54,7 @@ test('残り時間と警告の強さ、帰路につく時刻', () => {
   assert.deepEqual(splitDuration(85 * 60_000), { h: 1, m: 25 })
 })
 
-test('日の出・潮の「！」: 危険潮位と、航行限定の船の日没', () => {
+test('日没・干満の「！」: 危険潮位と、航行限定の船の日没', () => {
   assert.equal(tideAlert({ dropAt: HOUR, recoverAt: null, belowNow: false, levelNow: 1 }, 0), true)
   assert.equal(tideAlert({ dropAt: 3 * HOUR, recoverAt: null, belowNow: false, levelNow: 1 }, 0), false)
   assert.equal(tideAlert({ dropAt: null, recoverAt: HOUR, belowNow: true, levelNow: 0.3 }, 0), true)

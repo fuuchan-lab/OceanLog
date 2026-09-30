@@ -178,7 +178,7 @@ function PortTide({ port, day, now }: { port: HomePort; day: number; now: number
   )
 }
 
-/** 日の出・潮の画面。現在地と出航地の潮位、日の出・日の入り・薄明、月齢と潮の呼び名。日付を切り替えられる */
+/** 日没・干満の画面。現在地と出航地の潮位、日の出・日の入り・薄明、月齢と潮の呼び名。日付を切り替えられる */
 export function TidePage({ at, conditions, profile, underway }: { at: LatLon | null; conditions: Conditions | null; profile: Profile; underway: boolean }) {
   const { t, lang } = useI18n()
   const now = Date.now()

@@ -30,7 +30,7 @@ const ICONS: Record<Tab, ReactNode> = {
       />
     </svg>
   ),
-  // 日の出・潮: 水平線の太陽と潮の曲線
+  // 日没・干満: 水平線の太陽と潮の曲線
   tide: (
     <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M6.5 12.5a5.5 5.5 0 0 1 11 0z" fill="currentColor" />
@@ -77,7 +77,7 @@ interface Props {
   recording: boolean
   /** 注意報・警報などがあれば、波・気象のボタンに「！」を付ける */
   alert: boolean
-  /** 危険潮位・日没（航行限定の船）が近ければ、日の出・潮のボタンに「！」を付ける */
+  /** 危険潮位・日没（航行限定の船）が近ければ、日没・干満のボタンに「！」を付ける */
   tideAlert: boolean
   /** 免許の更新・船舶検査が1か月以内なら、資格・船舶のボタンに「！」を付ける */
   docsAlert: boolean
