@@ -83,10 +83,11 @@ export default function App() {
   requestSync.current = sync.request
 
   const port = profile.ports.find((p) => p.id === profile.activePortId) ?? profile.ports[0] ?? null
+  // 「出港」を押してから帰港するまでが「航行モード」
   const underway = log.activeTrack !== null
   // 天気・波・潮・日の出の基準の場所: 海に出るまでは出航地、出港してからは現在地（出航地が未登録なら現在地）
   const basis = underway ? fix : (port ?? fix)
-  const basisLabel = underway || !port ? t('basis.here') : t('basis.port', { port: port.name })
+  const basisLabel = underway ? t('basis.underway') : !port ? t('basis.here') : t('basis.port', { port: port.name })
   const conditions = useConditions(basis)
   const warnings = useJmaWarnings([port, underway ? fix : null], lang)
 
