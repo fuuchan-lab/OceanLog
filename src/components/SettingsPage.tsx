@@ -10,6 +10,7 @@ import type { HomePort, Profile } from '../profile.ts'
 import { isValidTileUrl, type Settings } from '../settings.ts'
 import { applyTheme, loadTheme, saveTheme, type ThemePreference } from '../theme.ts'
 import { syncText } from './Header.tsx'
+import { MapPicker } from './MapPicker.tsx'
 
 interface Props {
   auth: GoogleAuth
@@ -59,29 +60,29 @@ function PortForm({ initial, here, onSave, onDelete, onClose }: { initial: HomeP
           {t('port.name')}
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('port.namePlaceholder')} required />
         </label>
-        <div className="grid2">
-          <label>
-            {t('port.lat')}
-            <input value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" placeholder="35.12345" />
-          </label>
-          <label>
-            {t('port.lon')}
-            <input value={lon} onChange={(e) => setLon(e.target.value)} inputMode="decimal" placeholder="139.12345" />
-          </label>
-        </div>
-        {latV !== null && lonV !== null && <p className="muted small">{formatPosition({ lat: latV, lon: lonV })}</p>}
-        {here && (
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => {
-              setLat(here.lat.toFixed(5))
-              setLon(here.lon.toFixed(5))
-            }}
-          >
-            📍 {t('port.useHere')}
-          </button>
-        )}
+        <p className="field-title">{t('port.position')}</p>
+        <MapPicker
+          value={initial.lat || initial.lon ? { lat: initial.lat, lon: initial.lon } : null}
+          here={here}
+          onChange={(at) => {
+            setLat(at.lat.toFixed(6))
+            setLon(at.lon.toFixed(6))
+          }}
+        />
+        <details className="details">
+          <summary>{t('port.latlonDetails')}</summary>
+          <div className="grid2">
+            <label>
+              {t('port.lat')}
+              <input value={lat} onChange={(e) => setLat(e.target.value)} inputMode="decimal" placeholder="35.12345" />
+            </label>
+            <label>
+              {t('port.lon')}
+              <input value={lon} onChange={(e) => setLon(e.target.value)} inputMode="decimal" placeholder="139.12345" />
+            </label>
+          </div>
+          {latV !== null && lonV !== null && <p className="muted small">{formatPosition({ lat: latV, lon: lonV })}</p>}
+        </details>
         <div className="grid2">
           <label>
             {t('port.danger')}
@@ -189,7 +190,7 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, se
           className="secondary"
           onClick={() =>
             setEditing({
-              port: { id: newId(), name: '', lat: here?.lat ?? 0, lon: here?.lon ?? 0, z0: 0, dangerLevel: 0.5 },
+              port: { id: newId(), name: '', lat: 0, lon: 0, z0: 0, dangerLevel: 0.5 },
               isNew: true,
             })
           }
