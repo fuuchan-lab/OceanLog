@@ -65,10 +65,15 @@ npm run build    # dist/ に出力
 
 `main` に push すると GitHub Actions で GitHub Pages に公開します（`.github/workflows/deploy.yml`）。
 
+公開先: https://oceanlog.doitmyself.net/ （GitHub Pages ＋ Value-Domain の CNAME。`public/CNAME`）
+- Value-Domain で CNAME `oceanlog` → `fuuchan-lab.github.io` を設定する
+- GitHub の Settings → Pages の「Custom domain」に `oceanlog.doitmyself.net` が入り、「Enforce HTTPS」をオンにする
+
 ### Google ログイン
 
 当面は LeadLog と同じ OAuth クライアントを使います（承認済みの JavaScript 生成元に `https://fuuchan-lab.github.io` が登録済みなので、
 GitHub Pages の `https://fuuchan-lab.github.io/OceanLog/` ではそのまま使えます。ただしログイン画面のアプリ名は「LeadLog」と出ます）。
+`https://oceanlog.doitmyself.net` で Google ログインを使うには、その OAuth クライアントの「承認済みの JavaScript 生成元」に `https://oceanlog.doitmyself.net` を追加してください。
 OceanLog 専用にする場合は、Google Cloud でプロジェクト「OceanLog」と OAuth クライアント（Web）を作り、Drive API を有効にして、
 リポジトリの Variables に `VITE_GOOGLE_CLIENT_ID` を入れてください（ローカルは `.env.example` を `.env.local` にコピー）。
 

@@ -11,7 +11,7 @@ export const driveConfig = {
   folderName: 'OceanLog',
   legacyFolderNames: [] as string[],
   // 公開されるクライアントID（秘密ではない）。当面は LeadLog と同じ OAuth クライアント（承認済みの生成元に
-  // https://fuuchan-lab.github.io が登録済み）を使う。OceanLog 専用のクライアントを作ったら、
+  // https://fuuchan-lab.github.io が登録済み。https://oceanlog.doitmyself.net は追加が必要）を使う。OceanLog 専用のクライアントを作ったら、
   // .env.local（または GitHub Actions の変数）の VITE_GOOGLE_CLIENT_ID で差し替える。
   clientId:
     (import.meta.env?.VITE_GOOGLE_CLIENT_ID as string | undefined) ||
