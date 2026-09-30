@@ -26,6 +26,7 @@ import { portLevels, sunsetAlert, tideAlert, tideCrossing, waveRisk } from './sa
 import { sunTimes } from './sun.ts'
 import { usePortTide } from './hooks/usePortTide.ts'
 import { loadSettings, saveSettings, type Settings } from './settings.ts'
+import { loadMsil, saveMsil, type MsilSettings } from './msil.ts'
 import type { TrackPoint } from './types.ts'
 import { assessTrend } from './warning.ts'
 
@@ -54,6 +55,12 @@ export default function App() {
       navigator.vibrate?.([200, 100, 200])
     },
   )
+
+  const [msil, setMsilState] = useState<MsilSettings>(loadMsil)
+  const setMsil = (m: MsilSettings) => {
+    setMsilState(m)
+    saveMsil(m)
+  }
 
   const setSettings = (s: Settings) => {
     setSettingsState(s)
@@ -144,6 +151,8 @@ export default function App() {
             onClearShown={() => setShownTrack(null)}
             focus={focus}
             hazards={osmHazards}
+            msil={msil}
+            onMsil={setMsil}
             onMapCenter={setMapCenter}
           />
           <button className="secondary log-open" onClick={() => go('log')}>
@@ -209,6 +218,8 @@ export default function App() {
           settings={settings}
           onSettings={setSettings}
           here={fix}
+          msil={msil}
+          onMsil={setMsil}
         />
       )}
 

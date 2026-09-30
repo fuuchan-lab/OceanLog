@@ -9,6 +9,8 @@ import { BASE_LAYERS, GEBCO_WMS, SEAMARKS } from '../tiles.ts'
 import { MARK_ICONS, type Mark, type TrackPoint } from '../types.ts'
 import { splitSegments } from '../voyage.ts'
 import type { Hazard, WaterLevel } from '../hazards.ts'
+import type { MsilSettings } from '../msil.ts'
+import { msilLayer } from './msilLayer.ts'
 
 interface Props {
   settings: Settings
@@ -28,6 +30,9 @@ interface Props {
   onCenter: (center: LatLon, zoom: number) => void
   /** OpenSeaMap に登録された危険物（暗岩・洗岩・沈船など） */
   hazards: Hazard[]
+  /** 海しるの項目（自分のキーで表示） */
+  msil: MsilSettings
+  onMsilError: (status: number) => void
 }
 
 const shipIcon = (course: number | null) =>
@@ -87,7 +92,7 @@ function trackLayer(points: TrackPoint[], cls: string): L.LayerGroup {
 }
 
 /** Leaflet の地図（海図）。React からは、表示する中身を渡すだけにする */
-export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTrack, marks, ports, focus, onMarkClick, onCenter, hazards }: Props) {
+export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTrack, marks, ports, focus, onMarkClick, onCenter, hazards, msil, onMsilError }: Props) {
   const el = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
   const layers = useRef<{
@@ -101,10 +106,11 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
     marks?: L.LayerGroup
     ports?: L.LayerGroup
     hazards?: L.LayerGroup
+    msil?: L.GridLayer[]
   }>({})
-  const cb = useRef({ onUserMove, onMarkClick, onCenter })
+  const cb = useRef({ onUserMove, onMarkClick, onCenter, onMsilError })
   useEffect(() => {
-    cb.current = { onUserMove, onMarkClick, onCenter }
+    cb.current = { onUserMove, onMarkClick, onCenter, onMsilError }
   })
 
   // 地図を作る（1回だけ）
@@ -215,6 +221,19 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
       ),
     ).addTo(m)
   }, [marks])
+
+  // 海しるの項目（暗岩・洗岩・海底地形など。使う人が自分で利用登録したキーで取得する）
+  const msilKey = msil.key
+  const msilShown = msil.layers.filter((l) => msil.enabled.includes(l.id))
+  const msilSig = msilShown.map((l) => l.url).join('|')
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    const l = layers.current
+    for (const layer of l.msil ?? []) layer.remove()
+    l.msil = msilKey ? msilShown.map((x) => msilLayer(x.url, msilKey, (status) => cb.current.onMsilError(status)).addTo(m)) : []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [msilKey, msilSig])
 
   // OpenSeaMap の危険物（暗岩・洗岩・干出岩・沈船・障害物）
   useEffect(() => {

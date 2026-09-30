@@ -11,6 +11,8 @@ import { isValidTileUrl, type Settings } from '../settings.ts'
 import { applyTheme, loadTheme, saveTheme, type ThemePreference } from '../theme.ts'
 import { syncText } from './Header.tsx'
 import { MapPicker } from './MapPicker.tsx'
+import { MsilSettingsCard } from './MsilSettingsCard.tsx'
+import type { MsilSettings } from '../msil.ts'
 
 interface Props {
   auth: GoogleAuth
@@ -21,6 +23,8 @@ interface Props {
   settings: Settings
   onSettings: (s: Settings) => void
   here: LatLon | null
+  msil: MsilSettings
+  onMsil: (m: MsilSettings) => void
 }
 
 function PortForm({ initial, here, onSave, onDelete, onClose }: { initial: HomePort; here: LatLon | null; onSave: (p: HomePort) => void; onDelete?: () => void; onClose: () => void }) {
@@ -109,7 +113,7 @@ function PortForm({ initial, here, onSave, onDelete, onClose }: { initial: HomeP
 }
 
 /** 設定: アカウント・出航地・単位・地図・言語・配色・データの出典 */
-export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, settings, onSettings, here }: Props) {
+export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, settings, onSettings, here, msil, onMsil }: Props) {
   const { t, lang, setLang } = useI18n()
   const [editing, setEditing] = useState<{ port: HomePort; isNew: boolean } | null>(null)
   const [theme, setTheme] = useState<ThemePreference>(loadTheme)
@@ -210,6 +214,8 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, se
         </div>
         <p className="muted small">{t('settings.unitsHint')}</p>
       </section>
+
+      <MsilSettingsCard msil={msil} onChange={onMsil} />
 
       <section className="card">
         <h2>{t('settings.customTiles')}</h2>

@@ -37,6 +37,8 @@ LeadLog・頭痛ログと同じ構成です（React + TypeScript + Vite、Google
 | 海図記号 | OpenSeaMap（CC BY-SA） |
 | 水深 | GEBCO |
 | 風のマップ | Windy.com 公式の埋め込み表示（開いた時だけ読み込む） |
+| 暗岩・洗岩・沈船など | OpenSeaMap（OpenStreetMap の Overpass API、ODbL）。日本は登録が少ない |
+| 海しる（任意） | 海上保安庁の海しる API。**使う人がそれぞれ利用登録**して、自分のキーを設定に入れる（キーは端末の中だけに保存）。表示中は利用規約の注意書きを出す |
 | 日の出・日の入り・月齢 | 端末の中で計算 |
 
 C-MAP・Navionics などの有料の海図は使っていません（Web に組み込める公開 API がなく、ライセンスが必要なため）。

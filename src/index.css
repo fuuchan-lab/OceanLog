@@ -3505,3 +3505,26 @@ button.link {
 .compass-deg {
   font-size: 15px;
 }
+
+.steps {
+  margin: 6px 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.msil-notice {
+  position: absolute;
+  left: 110px;
+  right: 8px;
+  bottom: 22px;
+  z-index: 500;
+  margin: 0;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  font-size: 10.5px;
+  line-height: 1.35;
+}
