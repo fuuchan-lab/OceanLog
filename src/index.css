@@ -3003,3 +3003,280 @@ progress {
   font-weight: 600;
   font-size: 14px;
 }
+
+/* ================= 視認性（炎天下・夜間） =================
+   船の上では、真昼の直射日光の下でも読めることを優先する。
+   ライト: 真っ白な背景に真っ黒な文字・濃い紺のアクセント・太い枠線。警告は色の面で塗り、白や黒の太字で出す。
+   ダーク（夜間）: 真っ黒な背景に白い文字。明るい水色のアクセント。
+   上の :root の色を、ここで上書きする（ダークの色は、手動の選択と端末の設定の2か所に同じものを書く） */
+:root,
+:root[data-theme='light'] {
+  --bg: #ffffff;
+  --card: #ffffff;
+  --text: #000000;
+  --muted: #1f2933;
+  --border: #111827;
+  --accent: #0033a0;
+  --accent-text: #ffffff;
+  --danger: #b00000;
+  --caution-bg: #ffd400;
+  --caution-text: #000000;
+  --warning-bg: #c40000;
+  --warning-text: #ffffff;
+  --ok-bg: #006b2e;
+  --ok-text: #ffffff;
+  --info-bg: #0033a0;
+  --info-text: #ffffff;
+  --line: 2px;
+}
+
+:root[data-theme='dark'] {
+  --bg: #000000;
+  --card: #0d0d0d;
+  --text: #ffffff;
+  --muted: #d0d7de;
+  --border: #9aa4b2;
+  --accent: #5cc8ff;
+  --accent-text: #000000;
+  --danger: #ff6b6b;
+  --caution-bg: #ffd400;
+  --caution-text: #000000;
+  --warning-bg: #ff4d4d;
+  --warning-text: #000000;
+  --ok-bg: #3ddc84;
+  --ok-text: #000000;
+  --info-bg: #5cc8ff;
+  --info-text: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #000000;
+    --card: #0d0d0d;
+    --text: #ffffff;
+    --muted: #d0d7de;
+    --border: #9aa4b2;
+    --accent: #5cc8ff;
+    --accent-text: #000000;
+    --danger: #ff6b6b;
+    --caution-bg: #ffd400;
+    --caution-text: #000000;
+    --warning-bg: #ff4d4d;
+    --warning-text: #000000;
+    --ok-bg: #3ddc84;
+    --ok-text: #000000;
+    --info-bg: #5cc8ff;
+    --info-text: #000000;
+  }
+}
+
+/* 文字は大きく・太めに（揺れる船の上で、腕を伸ばしても読めるように） */
+body {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.muted {
+  font-size: 0.9375rem;
+}
+
+.small {
+  font-size: 0.8125rem;
+}
+
+h2 {
+  font-weight: 800;
+}
+
+label,
+.stat-label {
+  font-weight: 700;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.stat-value small {
+  color: var(--text);
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.latlon {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+/* 枠線ははっきりと */
+.card,
+.safety-item,
+.hour,
+.extremes li,
+.seg button,
+.kind,
+.fab,
+.layers-panel,
+.map-wrap,
+input:not([type]),
+input[inputmode],
+input[type='date'],
+input[type='text'],
+input[type='number'],
+textarea,
+select,
+button.secondary,
+a.button {
+  border: 2px solid var(--border);
+}
+
+input:not([type]),
+input[inputmode],
+input[type='date'],
+input[type='text'],
+input[type='number'],
+textarea,
+select {
+  background: var(--card);
+  font-weight: 600;
+}
+
+button.primary,
+button.secondary,
+button.danger-btn,
+a.button {
+  font-weight: 800;
+  font-size: 17px;
+}
+
+button.link {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* お知らせ・警告は、色の面で塗って太字に */
+.banner,
+.safety-item {
+  font-weight: 700;
+}
+
+.safety-item.level-info {
+  background: var(--card);
+}
+
+.safety-item.level-warning,
+.safety-item.level-caution,
+.safety-item.level-ok {
+  border-color: transparent;
+}
+
+.safety-item.level-warning .muted,
+.safety-item.level-caution .muted,
+.safety-item.level-ok .muted,
+.banner .muted {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.safety-item.level-warning a,
+.safety-item.level-ok a {
+  color: inherit;
+}
+
+.tide-name {
+  font-size: 15px;
+}
+
+/* 下のメニュー: 選んでいない項目も、はっきりした色で */
+.nav-item {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.nav-item.active {
+  color: var(--accent);
+}
+
+.bottom-nav {
+  border-top: 2px solid var(--border);
+  background: var(--card);
+}
+
+/* 「！」は黒で縁取りして、黄色の上でも見えるように */
+.bang,
+.nav-bang {
+  background: #c40000;
+  color: #fff;
+}
+
+/* 海図の上の表示は、透けさせない */
+.hud {
+  background: var(--card);
+  color: var(--text);
+  border: 2px solid var(--border);
+  font-size: 15px;
+}
+
+.shown-chip {
+  border: 2px solid var(--border);
+  font-weight: 700;
+}
+
+/* グラフの文字も大きく */
+.axis-label,
+.spark-label {
+  fill: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tide-label,
+.spark-value {
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.tide-line,
+.spark-line {
+  stroke-width: 3;
+}
+
+.grid-line {
+  stroke: var(--muted);
+  opacity: 0.35;
+}
+
+.bar {
+  opacity: 1;
+}
+
+.bar-caution {
+  background: #e0a800;
+}
+
+.bar-danger {
+  background: #c40000;
+}
+
+.bar-limit {
+  border-top-color: #c40000;
+}
+
+.danger-zone {
+  fill: #c40000;
+  opacity: 0.18;
+}
+
+.danger-line {
+  stroke: #c40000;
+  stroke-width: 2;
+}
+
+.leaflet-control-attribution {
+  font-size: 11px;
+}

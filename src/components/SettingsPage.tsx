@@ -256,6 +256,7 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, se
             </button>
           ))}
         </div>
+        <p className="muted small">{t('settings.themeHint')}</p>
       </section>
 
       <section className="card">
