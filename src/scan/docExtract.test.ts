@@ -21,6 +21,7 @@ test('船舶検査証書から船の情報', () => {
 長さ 5.80 m 幅 2.10 m 深さ 0.95 m
 最大搭載人員 旅客 0人 船員 1人 その他の乗船者 4人 計 5人
 推進機関 ガソリン機関 1基 出力 66.2 kW
+航行上の条件 航行時間の制限 日出から日没までの間に限る
 有効期間 令和10年6月14日まで`
   const b = extractBoat(text)
   assert.equal(b.name, '海風丸')
@@ -31,6 +32,8 @@ test('船舶検査証書から船の情報', () => {
   assert.equal(b.capacity, 5)
   assert.equal(b.horsepower, 90)
   assert.equal(b.inspectionExpiry, '2028-06-14')
+  assert.equal(b.daylightOnly, true)
+  assert.equal(extractBoat('長さ 3.2 m').daylightOnly, undefined)
 })
 
 test('馬力の表記', () => {

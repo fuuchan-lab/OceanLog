@@ -68,16 +68,24 @@ export function SafetyCard({ fix, conditions, profile, warnings, underway, onSel
       const noon = new Date(now)
       noon.setHours(12, 0, 0, 0)
       const sun = sunTimes(noon.getTime(), here.lat, here.lon)
+      const limited = profile.boat.daylightOnly
       if (sun.sunset !== null && sun.sunset > now) {
-        deadlines.push(sun.sunset)
+        // 「日出から日没まで」の航行限定の船だけ、日没を警告・帰港の期限にする
+        if (limited) deadlines.push(sun.sunset)
         list.push({
-          level: urgency(sun.sunset - now),
+          level: limited ? urgency(sun.sunset - now) : 'info',
           icon: '🌇',
           text: t('safety.sunset', { d: fmtDuration(sun.sunset - now, t), time: fmtTime(sun.sunset, locale) }),
-          sub: sun.dusk !== null ? t('safety.dusk', { time: fmtTime(sun.dusk, locale) }) : undefined,
+          sub: [limited ? t('safety.daylightOnly') : '', sun.dusk !== null ? t('safety.dusk', { time: fmtTime(sun.dusk, locale) }) : '']
+            .filter(Boolean)
+            .join(' / '),
         })
       } else if (sun.sunset !== null && sun.sunset <= now) {
-        list.push({ level: underway ? 'warning' : 'info', icon: '🌙', text: t('safety.afterSunset') })
+        list.push({
+          level: limited && underway ? 'warning' : 'info',
+          icon: '🌙',
+          text: limited && underway ? t('safety.afterSunsetLimited') : t('safety.afterSunset'),
+        })
       }
     }
 

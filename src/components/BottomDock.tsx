@@ -75,14 +75,16 @@ interface Props {
   onTab: (tab: Tab) => void
   /** 航跡を記録中なら、海図のボタンに赤い印を付ける */
   recording: boolean
-  /** 警告があれば、波・気象のボタンに印を付ける */
+  /** 注意報・警報などがあれば、波・気象のボタンに「！」を付ける */
   alert: boolean
+  /** 危険潮位・日没（航行限定の船）が近ければ、日の出・潮のボタンに「！」を付ける */
+  tideAlert: boolean
   /** 免許の更新・船舶検査が1か月以内なら、資格・船舶のボタンに「！」を付ける */
   docsAlert: boolean
 }
 
 /** 画面の下に固定するメニュー（LeadLog と同じ形） */
-export function BottomDock({ tab, onTab, recording, alert, docsAlert }: Props) {
+export function BottomDock({ tab, onTab, recording, alert, tideAlert, docsAlert }: Props) {
   const { t } = useI18n()
   const ref = useRef<HTMLDivElement>(null)
 
@@ -112,7 +114,11 @@ export function BottomDock({ tab, onTab, recording, alert, docsAlert }: Props) {
             <span className="nav-icon-wrap">
               {ICONS[id]}
               {id === 'chart' && recording && <span className="nav-dot nav-dot-rec" />}
-              {id === 'sea' && alert && <span className="nav-dot nav-dot-alert" />}
+              {((id === 'sea' && alert) || (id === 'tide' && tideAlert)) && (
+                <span className="nav-bang" aria-label={t('nav.alert')}>
+                  !
+                </span>
+              )}
               {id === 'docs' && docsAlert && (
                 <span className="nav-bang" aria-label={t('renew.badge')}>
                   !

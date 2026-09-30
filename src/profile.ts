@@ -42,6 +42,8 @@ export interface Boat {
   maxSpeed: number | null
   /** 危険な波の高さ (m)。予報の波高がこれを超えそうなら警告する */
   dangerWave: number | null
+  /** 航行時間の制限「日出から日没まで」（船舶検査証書の航行上の条件）。あれば日没を警告する */
+  daylightOnly: boolean
 }
 
 export type DocKind = 'boatBook' | 'license' | 'other'
@@ -76,7 +78,7 @@ export interface Profile {
   updatedAt: number
 }
 
-export const EMPTY_BOAT: Boat = { type: 'boat', name: '', registration: '', photoId: null, length: null, beam: null, depth: null, capacity: null, horsepower: null, maxSpeed: null, dangerWave: null }
+export const EMPTY_BOAT: Boat = { type: 'boat', name: '', registration: '', photoId: null, length: null, beam: null, depth: null, capacity: null, horsepower: null, maxSpeed: null, dangerWave: null, daylightOnly: false }
 
 export const EMPTY_DOCS: Docs = { items: [], licenseType: '', licenseExpiry: '', inspectionExpiry: '' }
 
@@ -125,6 +127,7 @@ export function parseProfile(value: unknown): Profile {
       horsepower: numOrNull(b.horsepower),
       maxSpeed: numOrNull(b.maxSpeed),
       dangerWave: numOrNull(b.dangerWave),
+      daylightOnly: b.daylightOnly === true,
     },
     docs: parseDocs(v.docs),
     activePortId: typeof v.activePortId === 'string' && ports.some((p) => p.id === v.activePortId) ? v.activePortId : null,

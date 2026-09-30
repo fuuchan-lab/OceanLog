@@ -108,3 +108,17 @@ export function splitDuration(ms: number): { h: number; m: number } {
   const total = Math.max(0, Math.round(ms / MIN))
   return { h: Math.floor(total / 60), m: total % 60 }
 }
+
+/** 日の出・潮のボタンに「！」を付けるか: 出航地が危険潮位を下回っている・2時間以内に下回る */
+export function tideAlert(c: Crossing, now: number): boolean {
+  return c.belowNow || (c.dropAt !== null && c.dropAt - now <= 120 * MIN)
+}
+
+/**
+ * 日没の警告: 「日出から日没まで」の航行限定の船だけ。日没まで2時間を切ったら（出港中なら日没後も）
+ */
+export function sunsetAlert(sunset: number | null, now: number, daylightOnly: boolean, underway: boolean): boolean {
+  if (!daylightOnly || sunset === null) return false
+  if (sunset <= now) return underway
+  return sunset - now <= 120 * MIN
+}

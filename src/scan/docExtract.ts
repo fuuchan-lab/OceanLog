@@ -13,6 +13,8 @@ export interface BoatExtract {
   horsepower?: number
   /** 次回の船舶検査の時期（検査証書の有効期間の満了日） YYYY-MM-DD */
   inspectionExpiry?: string
+  /** 航行時間の制限「日出から日没まで」（航行上の条件） */
+  daylightOnly?: boolean
 }
 
 export interface LicenseExtract {
@@ -106,6 +108,7 @@ export function extractBoat(raw: string): BoatExtract {
   else if (kw) out.horsepower = Math.round(Number(kw[1]) * 1.36)
   const exp = expiryDate(text, /有効期間|満了|次回|まで有効|有効期限/)
   if (exp) out.inspectionExpiry = exp
+  if (/日出(から|より)?.{0,3}日没|日の出.{0,4}日の入|昼間に限/.test(text)) out.daylightOnly = true
   return out
 }
 

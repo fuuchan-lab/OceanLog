@@ -21,7 +21,9 @@ import { useLog } from './hooks/useLog.ts'
 import { useSync } from './hooks/useSync.ts'
 import { useI18n } from './i18n/useI18n.ts'
 import { loadProfile, saveProfile, upcomingRenewals, type Profile } from './profile.ts'
-import { waveRisk } from './safety.ts'
+import { portLevels, sunsetAlert, tideAlert, tideCrossing, waveRisk } from './safety.ts'
+import { sunTimes } from './sun.ts'
+import { usePortTide } from './hooks/usePortTide.ts'
 import { loadSettings, saveSettings, type Settings } from './settings.ts'
 import type { TrackPoint } from './types.ts'
 import { assessTrend } from './warning.ts'
@@ -84,12 +86,22 @@ export default function App() {
   const port = profile.ports.find((p) => p.id === profile.activePortId) ?? profile.ports[0] ?? null
   const warnings = useJmaWarnings([port, fix], lang)
 
-  // 波・気象のボタンに印を付ける: 気象庁の警報・波高の危険・気圧の急な低下
+  // 波・気象のボタンの「！」: 気象庁の注意報・警報・波高の危険・気圧の急な低下
   const data = conditions.data
   const alert =
-    warnings.areas.some((a) => a.list.some((w) => w.level !== 'advisory')) ||
+    warnings.areas.some((a) => a.list.length > 0) ||
     (data?.marine ? waveRisk(data.marine.waves, profile.boat.dangerWave, Date.now()).level === 'warning' : false) ||
     (data?.weather ? assessTrend(data.weather.pressure, t, data.fetchedAt).level === 'warning' : false)
+
+  // 日の出・潮のボタンの「！」: 出航地の危険潮位が近い・日没が近い（日出から日没までの航行限定の船）
+  const portTide = usePortTide(port)
+  const now = Date.now()
+  const here = fix ?? port
+  const noon = new Date(now)
+  noon.setHours(12, 0, 0, 0)
+  const tideWarn =
+    (port !== null && portTide.seaLevel.length > 0 && tideAlert(tideCrossing(portLevels(port, portTide.seaLevel), port.dangerLevel, now), now)) ||
+    (here !== null && sunsetAlert(sunTimes(noon.getTime(), here.lat, here.lon).sunset, now, profile.boat.daylightOnly, log.activeTrack !== null))
 
   // 免許の更新・次回の船舶検査（1か月前から知らせる）
   const renewals = useMemo(() => upcomingRenewals(profile, Date.now()), [profile])
@@ -180,7 +192,7 @@ export default function App() {
         />
       )}
 
-      <BottomDock tab={view === 'log' ? 'chart' : view} onTab={go} recording={log.activeTrack !== null} alert={alert} docsAlert={renewals.length > 0} />
+      <BottomDock tab={view === 'log' ? 'chart' : view} onTab={go} recording={log.activeTrack !== null} alert={alert} tideAlert={tideWarn} docsAlert={renewals.length > 0} />
     </div>
   )
 }

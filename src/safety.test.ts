@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { NM } from './geo.ts'
 import type { HomePort } from './profile.ts'
-import { latestDeparture, portLevels, returnEstimate, splitDuration, tideCrossing, urgency, waveRisk } from './safety.ts'
+import { sunsetAlert, tideAlert, latestDeparture, portLevels, returnEstimate, splitDuration, tideCrossing, urgency, waveRisk } from './safety.ts'
 
 const HOUR = 3_600_000
 const port: HomePort = { id: 'p', name: '港', lat: 35, lon: 139, z0: 1, dangerLevel: 0.6 }
@@ -52,4 +52,15 @@ test('残り時間と警告の強さ、帰路につく時刻', () => {
   assert.deepEqual(latestDeparture([5 * HOUR, 3 * HOUR, null], HOUR), { at: 2 * HOUR - 15 * 60_000, deadline: 3 * HOUR })
   assert.equal(latestDeparture([null], HOUR), null)
   assert.deepEqual(splitDuration(85 * 60_000), { h: 1, m: 25 })
+})
+
+test('日の出・潮の「！」: 危険潮位と、航行限定の船の日没', () => {
+  assert.equal(tideAlert({ dropAt: HOUR, recoverAt: null, belowNow: false, levelNow: 1 }, 0), true)
+  assert.equal(tideAlert({ dropAt: 3 * HOUR, recoverAt: null, belowNow: false, levelNow: 1 }, 0), false)
+  assert.equal(tideAlert({ dropAt: null, recoverAt: HOUR, belowNow: true, levelNow: 0.3 }, 0), true)
+  assert.equal(sunsetAlert(HOUR, 0, true, false), true)
+  assert.equal(sunsetAlert(HOUR, 0, false, true), false)
+  assert.equal(sunsetAlert(3 * HOUR, 0, true, true), false)
+  assert.equal(sunsetAlert(-HOUR, 0, true, false), false)
+  assert.equal(sunsetAlert(-HOUR, 0, true, true), true)
 })

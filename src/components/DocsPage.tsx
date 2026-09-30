@@ -117,6 +117,10 @@ export function DocsPage({ profile, onChange }: Props) {
           setNum('depth', x.depth, 'boat.depth')
           setNum('capacity', x.capacity, 'boat.capacity')
           setNum('horsepower', x.horsepower, 'boat.hp')
+          if (x.daylightOnly && !boat.daylightOnly) {
+            boat.daylightOnly = true
+            filled.push(t('boat.daylightOnly'))
+          }
           if (x.inspectionExpiry && !docs.inspectionExpiry) {
             docs.inspectionExpiry = x.inspectionExpiry
             filled.push(t('docs.inspectionExpiry'))
@@ -259,6 +263,11 @@ export function DocsPage({ profile, onChange }: Props) {
             <input inputMode="decimal" defaultValue={boat.dangerWave ?? ''} onBlur={(e) => setBoat({ dangerWave: numField(e.target.value) })} />
           </label>
         </div>
+        <label className="check">
+          <input type="checkbox" checked={boat.daylightOnly} onChange={(e) => setBoat({ daylightOnly: e.target.checked })} />
+          {t('boat.daylightOnly')}
+        </label>
+        <p className="muted small">{t('boat.daylightOnlyHint')}</p>
         <p className="muted small">{t('boat.hint')}</p>
       </section>
 
