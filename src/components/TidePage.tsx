@@ -179,7 +179,7 @@ function PortTide({ port, day, now }: { port: HomePort; day: number; now: number
 }
 
 /** 日の出・潮の画面。現在地と出航地の潮位、日の出・日の入り・薄明、月齢と潮の呼び名。日付を切り替えられる */
-export function TidePage({ at, conditions, profile }: { at: LatLon | null; conditions: Conditions | null; profile: Profile }) {
+export function TidePage({ at, conditions, profile, underway }: { at: LatLon | null; conditions: Conditions | null; profile: Profile; underway: boolean }) {
   const { t, lang } = useI18n()
   const now = Date.now()
   const [offset, setOffset] = useState(0)
@@ -198,7 +198,8 @@ export function TidePage({ at, conditions, profile }: { at: LatLon | null; condi
       </div>
       {place ? <SunCard at={place} day={day} /> : <p className="muted">{t('pos.waiting')}</p>}
       {port && <PortTide port={port} day={day} now={now} />}
-      {conditions?.marine && conditions.marine.seaLevel.length > 0 && (
+      {/* 出港してからは、現在地の潮位も出す（出港前は、出航地の潮位だけ） */}
+      {(underway || !port) && conditions?.marine && conditions.marine.seaLevel.length > 0 && (
         <TideSection title={t('tide.hereTitle')} points={conditions.marine.seaLevel} day={day} now={now} danger={null} note={t('tide.hereNote')} />
       )}
       <p className="muted small">{t('tide.disclaimer')}</p>

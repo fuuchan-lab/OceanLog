@@ -82,9 +82,13 @@ export default function App() {
   const sync = useSync(auth.account, profileAccess, () => void log.reload())
   requestSync.current = sync.request
 
-  const conditions = useConditions(fix)
   const port = profile.ports.find((p) => p.id === profile.activePortId) ?? profile.ports[0] ?? null
-  const warnings = useJmaWarnings([port, fix], lang)
+  const underway = log.activeTrack !== null
+  // 天気・波・潮・日の出の基準の場所: 海に出るまでは出航地、出港してからは現在地（出航地が未登録なら現在地）
+  const basis = underway ? fix : (port ?? fix)
+  const basisLabel = underway || !port ? t('basis.here') : t('basis.port', { port: port.name })
+  const conditions = useConditions(basis)
+  const warnings = useJmaWarnings([port, underway ? fix : null], lang)
 
   // 波・気象のボタンの「！」: 気象庁の注意報・警報・波高の危険・気圧の急な低下
   const data = conditions.data
@@ -96,7 +100,7 @@ export default function App() {
   // 日の出・潮のボタンの「！」: 出航地の危険潮位が近い・日没が近い（日出から日没までの航行限定の船）
   const portTide = usePortTide(port)
   const now = Date.now()
-  const here = fix ?? port
+  const here = basis
   const noon = new Date(now)
   noon.setHours(12, 0, 0, 0)
   const tideWarn =
@@ -156,6 +160,13 @@ export default function App() {
         />
       )}
 
+      {(view === 'sea' || view === 'tide') && (
+        <p className="basis" role="note">
+          📍 {basisLabel}
+          {!underway && port && <span className="muted small"> · {t('basis.hint')}</span>}
+        </p>
+      )}
+
       {view === 'sea' && (
         <>
           <SafetyCard
@@ -163,11 +174,11 @@ export default function App() {
             conditions={data}
             profile={profile}
             warnings={warnings}
-            underway={log.activeTrack !== null}
+            underway={underway}
             onSelectPort={(id) => updateProfile((p) => ({ ...p, activePortId: id }))}
             onOpenSettings={() => go('settings')}
           />
-          <WindCard weather={data?.weather ?? null} at={fix ?? data?.at ?? null} unit={settings.windUnit} />
+          <WindCard weather={data?.weather ?? null} at={basis ?? data?.at ?? null} unit={settings.windUnit} />
           <WaveCard marine={data?.marine ?? null} dangerWave={profile.boat.dangerWave} />
           <WeatherCard state={conditions} onRefresh={() => void conditions.refresh()} />
           <PositionCard geo={geo} />
@@ -175,7 +186,7 @@ export default function App() {
         </>
       )}
 
-      {view === 'tide' && <TidePage at={fix ?? data?.at ?? null} conditions={data} profile={profile} />}
+      {view === 'tide' && <TidePage at={basis ?? data?.at ?? null} conditions={data} profile={profile} underway={underway} />}
 
       {view === 'docs' && <DocsPage profile={profile} onChange={updateProfile} />}
 

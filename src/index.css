@@ -2997,3 +2997,9 @@ progress {
 .track-gap {
   opacity: 0.6;
 }
+
+.basis {
+  margin: 0;
+  font-weight: 600;
+  font-size: 14px;
+}

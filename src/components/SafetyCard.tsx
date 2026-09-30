@@ -48,7 +48,8 @@ export function SafetyCard({ fix, conditions, profile, warnings, underway, onSel
 
   const items = useMemo(() => {
     const list: Item[] = []
-    const here = fix ?? port
+    // 出港前は出航地、出港してからは現在地を基準にする
+    const here = underway ? (fix ?? port) : (port ?? fix)
 
     // 気象庁の注意報・警報
     for (const a of warnings.areas) {
