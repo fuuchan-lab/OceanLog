@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { deletePhoto, getPhoto, putPhoto } from '../db.ts'
 import { newId } from '../device.ts'
 import { LOCALES } from '../i18n/context.ts'
@@ -12,6 +12,7 @@ import { DOC_KINDS, RENEWAL_NOTICE_DAYS, daysUntil, type Boat, type DocKind, typ
 interface Props {
   profile: Profile
   onChange: (update: (p: Profile) => Profile) => void
+  signedIn: boolean
 }
 
 /** 端末に保存した写真を表示する。写真の ID が変わったら読み直す */
@@ -77,10 +78,100 @@ const numField = (v: string): number | null => {
   return v.trim() === '' || !Number.isFinite(n) ? null : n
 }
 
+/** 入力中の値（数は文字のまま持ち、保存する時に数にする） */
+interface Draft {
+  type: Boat['type']
+  name: string
+  registration: string
+  length: string
+  beam: string
+  depth: string
+  capacity: string
+  horsepower: string
+  maxSpeed: string
+  dangerWave: string
+  daylightOnly: boolean
+  licenseType: string
+  licenseExpiry: string
+  inspectionExpiry: string
+}
+
+type NumKey = 'length' | 'beam' | 'depth' | 'capacity' | 'horsepower' | 'maxSpeed' | 'dangerWave'
+const NUM_KEYS: NumKey[] = ['length', 'beam', 'depth', 'capacity', 'horsepower', 'maxSpeed', 'dangerWave']
+
+function toDraft(p: Profile): Draft {
+  const b = p.boat
+  const num = (v: number | null) => (v === null ? '' : String(v))
+  return {
+    type: b.type,
+    name: b.name,
+    registration: b.registration,
+    length: num(b.length),
+    beam: num(b.beam),
+    depth: num(b.depth),
+    capacity: num(b.capacity),
+    horsepower: num(b.horsepower),
+    maxSpeed: num(b.maxSpeed),
+    dangerWave: num(b.dangerWave),
+    daylightOnly: b.daylightOnly,
+    licenseType: p.docs.licenseType,
+    licenseExpiry: p.docs.licenseExpiry,
+    inspectionExpiry: p.docs.inspectionExpiry,
+  }
+}
+
+function applyDraft(p: Profile, d: Draft): Profile {
+  const nums = Object.fromEntries(NUM_KEYS.map((k) => [k, numField(d[k])])) as Record<NumKey, number | null>
+  return {
+    ...p,
+    boat: { ...p.boat, type: d.type, name: d.name.trim(), registration: d.registration.trim(), daylightOnly: d.daylightOnly, ...nums },
+    docs: { ...p.docs, licenseType: d.licenseType.trim(), licenseExpiry: d.licenseExpiry, inspectionExpiry: d.inspectionExpiry },
+  }
+}
+
+/** 保存すると変わるか（入力の書き方の違い、例: 「5.0」と「5」は変わらないとみなす） */
+function changed(p: Profile, d: Draft): boolean {
+  const next = applyDraft(p, d)
+  return JSON.stringify([next.boat, next.docs]) !== JSON.stringify([p.boat, p.docs])
+}
+
 /** 資格・船舶情報: 船の情報と写真、船舶検査手帳・免許証の写真、有効期限 */
-export function DocsPage({ profile, onChange }: Props) {
+export function DocsPage({ profile, onChange, signedIn }: Props) {
   const { t, lang } = useI18n()
   const [viewing, setViewing] = useState<string | null>(null)
+  const [draft, setDraft] = useState<Draft>(() => toDraft(profile))
+  const [saved, setSaved] = useState(false)
+  const dirty = changed(profile, draft)
+  // 別の端末の変更をドライブから読み込んだ時は、入力中でなければ入力欄も合わせる
+  const [from, setFrom] = useState(profile)
+  if (from !== profile) {
+    setFrom(profile)
+    if (!changed(from, draft)) setDraft(toDraft(profile))
+  }
+  const set = (patch: Partial<Draft>) => {
+    setDraft((d) => ({ ...d, ...patch }))
+    setSaved(false)
+  }
+  const save = () => {
+    onChange((p) => applyDraft(p, draft))
+    setDraft(toDraft(applyDraft(profile, draft)))
+    setSaved(true)
+    navigator.vibrate?.(30)
+  }
+  // 保存せずにほかの画面に移った時も、入力した内容をなくさないよう保存する
+  const pending = useRef<{ dirty: boolean; draft: Draft }>({ dirty, draft })
+  pending.current = { dirty, draft }
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
+  useEffect(
+    () => () => {
+      if (pending.current.dirty) {
+        const d = pending.current.draft
+        onChangeRef.current((p) => applyDraft(p, d))
+      }
+    },
+    [],
+  )
   const [ocr, setOcr] = useState<{ kind: DocKind; progress: OcrProgress | null; result?: string; error?: string } | null>(null)
 
   /**
@@ -93,14 +184,15 @@ export function DocsPage({ profile, onChange }: Props) {
     try {
       const { text } = await recognize(canvas, (progress) => setOcr({ kind, progress }))
       const filled: string[] = []
-      onChange((p) => {
-        const boat = { ...p.boat }
-        const docs = { ...p.docs }
+      // 読み取った値は入力欄に入れるだけ。確かめてから「保存」を押してもらう
+      setDraft((d) => {
+        const boat = { ...d }
+        const docs = boat
         if (kind === 'boatBook') {
           const x = extractBoat(text)
           const setNum = (key: 'length' | 'beam' | 'depth' | 'capacity' | 'horsepower', v: number | undefined, label: MessageKey) => {
-            if (v !== undefined && boat[key] === null) {
-              boat[key] = v
+            if (v !== undefined && boat[key] === '') {
+              boat[key] = String(v)
               filled.push(t(label))
             }
           }
@@ -136,8 +228,9 @@ export function DocsPage({ profile, onChange }: Props) {
             filled.push(t('docs.licenseExpiry'))
           }
         }
-        return { ...p, boat, docs }
+        return boat
       })
+      setSaved(false)
       setOcr({ kind, progress: null, result: filled.length ? t('ocr.filled', { fields: filled.join('・') }) : t('ocr.nothing') })
     } catch (e) {
       console.error('[ocr]', e)
@@ -147,6 +240,12 @@ export function DocsPage({ profile, onChange }: Props) {
   const boat = profile.boat
   const boatPhoto = usePhotoUrl(boat.photoId)
   const setBoat = (patch: Partial<Boat>) => onChange((p) => ({ ...p, boat: { ...p.boat, ...patch } }))
+  const numInput = (key: NumKey, label: MessageKey, mode: 'decimal' | 'numeric' = 'decimal') => (
+    <label>
+      {t(label)}
+      <input inputMode={mode} value={draft[key]} onChange={(e) => set({ [key]: e.target.value })} />
+    </label>
+  )
 
   const addDoc = async (kind: DocKind, blob: Blob, canvas?: HTMLCanvasElement) => {
     if (canvas) void readDoc(kind, canvas)
@@ -182,12 +281,12 @@ export function DocsPage({ profile, onChange }: Props) {
   }
 
   const expiry = (key: 'licenseExpiry' | 'inspectionExpiry', label: MessageKey) => {
-    const value = profile.docs[key]
+    const value = draft[key]
     const days = daysUntil(value, Date.now())
     return (
       <label>
         {t(label)}
-        <input type="date" value={value} onChange={(e) => onChange((p) => ({ ...p, docs: { ...p.docs, [key]: e.target.value } }))} />
+        <input type="date" value={value} onChange={(e) => set({ [key]: e.target.value })} />
         {days !== null && (
           <span className={`small ${days < 0 ? 'error' : days <= RENEWAL_NOTICE_DAYS ? 'caution-text' : 'muted'}`}>
             {days <= RENEWAL_NOTICE_DAYS && <span className="bang">!</span>}
@@ -213,58 +312,37 @@ export function DocsPage({ profile, onChange }: Props) {
             </div>
           )}
           <div className="boat-name">
-            <p className="big-name">{boat.name || t('boat.unnamed')}</p>
+            <p className="big-name">{draft.name || t('boat.unnamed')}</p>
             {boat.registration && <p className="muted small">{t('boat.registrationShort', { v: boat.registration })}</p>}
             <PhotoCapture document={false} label={boatPhoto ? t('boat.retakePhoto') : t('boat.takePhoto')} onPhoto={(b) => void setBoatPhoto(b)} />
           </div>
         </div>
         <div className="seg" role="radiogroup" aria-label={t('boat.type')}>
           {(['boat', 'pwc'] as const).map((type) => (
-            <button key={type} role="radio" aria-checked={boat.type === type} className={boat.type === type ? 'on' : ''} onClick={() => setBoat({ type })}>
+            <button key={type} role="radio" aria-checked={draft.type === type} className={draft.type === type ? 'on' : ''} onClick={() => set({ type })}>
               {t(`boat.type.${type}`)}
             </button>
           ))}
         </div>
         <label>
           {t('boat.name')}
-          <input value={boat.name} placeholder={t(boat.type === 'pwc' ? 'boat.namePlaceholderPwc' : 'boat.namePlaceholder')} onChange={(e) => setBoat({ name: e.target.value })} />
+          <input value={draft.name} placeholder={t(draft.type === 'pwc' ? 'boat.namePlaceholderPwc' : 'boat.namePlaceholder')} onChange={(e) => set({ name: e.target.value })} />
         </label>
         <label>
           {t('boat.registration')}
-          <input value={boat.registration} onChange={(e) => setBoat({ registration: e.target.value })} />
+          <input value={draft.registration} onChange={(e) => set({ registration: e.target.value })} />
         </label>
-        <div className="grid2" key={`${boat.length}-${boat.beam}-${boat.depth}-${boat.capacity}-${boat.horsepower}-${boat.maxSpeed}-${boat.dangerWave}`}>
-          <label>
-            {t('boat.length')}
-            <input inputMode="decimal" defaultValue={boat.length ?? ''} onBlur={(e) => setBoat({ length: numField(e.target.value) })} />
-          </label>
-          <label>
-            {t('boat.beam')}
-            <input inputMode="decimal" defaultValue={boat.beam ?? ''} onBlur={(e) => setBoat({ beam: numField(e.target.value) })} />
-          </label>
-          <label>
-            {t('boat.depth')}
-            <input inputMode="decimal" defaultValue={boat.depth ?? ''} onBlur={(e) => setBoat({ depth: numField(e.target.value) })} />
-          </label>
-          <label>
-            {t('boat.capacity')}
-            <input inputMode="numeric" defaultValue={boat.capacity ?? ''} onBlur={(e) => setBoat({ capacity: numField(e.target.value) })} />
-          </label>
-          <label>
-            {t('boat.hp')}
-            <input inputMode="decimal" defaultValue={boat.horsepower ?? ''} onBlur={(e) => setBoat({ horsepower: numField(e.target.value) })} />
-          </label>
-          <label>
-            {t('boat.maxSpeed')}
-            <input inputMode="decimal" defaultValue={boat.maxSpeed ?? ''} onBlur={(e) => setBoat({ maxSpeed: numField(e.target.value) })} />
-          </label>
-          <label>
-            {t('boat.dangerWave')}
-            <input inputMode="decimal" defaultValue={boat.dangerWave ?? ''} onBlur={(e) => setBoat({ dangerWave: numField(e.target.value) })} />
-          </label>
+        <div className="grid2">
+          {numInput('length', 'boat.length')}
+          {numInput('beam', 'boat.beam')}
+          {numInput('depth', 'boat.depth')}
+          {numInput('capacity', 'boat.capacity', 'numeric')}
+          {numInput('horsepower', 'boat.hp')}
+          {numInput('maxSpeed', 'boat.maxSpeed')}
+          {numInput('dangerWave', 'boat.dangerWave')}
         </div>
         <label className="check">
-          <input type="checkbox" checked={boat.daylightOnly} onChange={(e) => setBoat({ daylightOnly: e.target.checked })} />
+          <input type="checkbox" checked={draft.daylightOnly} onChange={(e) => set({ daylightOnly: e.target.checked })} />
           {t('boat.daylightOnly')}
         </label>
         <p className="muted small">{t('boat.daylightOnlyHint')}</p>
@@ -282,9 +360,9 @@ export function DocsPage({ profile, onChange }: Props) {
                 {t('docs.licenseType')}
                 <input
                   list="license-types"
-                  value={profile.docs.licenseType}
+                  value={draft.licenseType}
                   placeholder={t('docs.licenseTypePlaceholder')}
-                  onChange={(e) => onChange((p) => ({ ...p, docs: { ...p.docs, licenseType: e.target.value } }))}
+                  onChange={(e) => set({ licenseType: e.target.value })}
                 />
                 <datalist id="license-types">
                   <option value="一級小型船舶操縦士" />
@@ -335,6 +413,20 @@ export function DocsPage({ profile, onChange }: Props) {
         )
       })}
       <p className="muted small">{t('docs.privacy')}</p>
+      {/* 保存ボタン（画面の下に固定）。変更がある時だけ押せる */}
+      <div className={`save-bar${dirty ? ' save-bar-dirty' : ''}`} role="status" aria-live="polite">
+        <span className="small">
+          {dirty ? t('docs.unsaved') : saved ? `✅ ${t('docs.saved')}${signedIn ? ' ' + t('docs.savedDrive') : ''}` : `✓ ${t('docs.allSaved')}`}
+        </span>
+        {dirty && (
+          <button className="link" onClick={() => setDraft(toDraft(profile))}>
+            {t('docs.revert')}
+          </button>
+        )}
+        <button className={dirty ? 'primary' : 'secondary'} disabled={!dirty} onClick={save}>
+          {dirty ? t('common.save') : `✓ ${t('msil.savedButton')}`}
+        </button>
+      </div>
       {viewing && <Viewer url={viewing} onClose={() => setViewing(null)} />}
     </>
   )

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { fmtTime } from '../format.ts'
 import type { LatLon } from '../geo.ts'
 import type { Conditions } from '../hooks/useConditions.ts'
@@ -141,7 +141,7 @@ function TideChart({ points, day, now, danger, unit, at }: { points: SeaLevelPoi
   )
 }
 
-function TideSection({ title, points, day, now, danger, note, at }: { title: string; points: SeaLevelPoint[]; day: number; now: number; danger: number | null; note?: string; at: LatLon | null }) {
+function TideSection({ title, points, day, now, danger, note, at, children }: { title: string; points: SeaLevelPoint[]; day: number; now: number; danger: number | null; note?: string; at: LatLon | null; children?: ReactNode }) {
   const { t, lang } = useI18n()
   const extremes = findExtremes(points).filter((x) => x.t >= day && x.t <= day + DAY)
   const state = tideState(findExtremes(points), now)
@@ -150,6 +150,7 @@ function TideSection({ title, points, day, now, danger, note, at }: { title: str
   return (
     <section className="card">
       <h2>{title}</h2>
+      {children}
       {isToday && state && (
         <p className="tide-now">
           {state.direction === 'rising' ? '⬆️ ' + t('tide.rising') : '⬇️ ' + t('tide.falling')}
@@ -178,7 +179,8 @@ function TideSection({ title, points, day, now, danger, note, at }: { title: str
   )
 }
 
-function SunCard({ at, day }: { at: LatLon; day: number }) {
+/** 日の出・日の入り・薄明と、月齢・潮の呼び名（潮位のカードの上に出す） */
+function SunInfo({ at, day }: { at: LatLon; day: number }) {
   const { t, lang } = useI18n()
   const locale = LOCALES[lang]
   const sun = sunTimes(day + DAY / 2, at.lat, at.lon)
@@ -190,8 +192,7 @@ function SunCard({ at, day }: { at: LatLon; day: number }) {
     </div>
   )
   return (
-    <section className="card">
-      <h2>{t('sun.title')}</h2>
+    <>
       <div className="stats stats-4">
         {cell(t('sun.dawn'), sun.dawn)}
         {cell(t('sun.sunrise'), sun.sunrise)}
@@ -206,23 +207,25 @@ function SunCard({ at, day }: { at: LatLon; day: number }) {
         <span className="tide-name">{t(`tideName.${tideName(moon.age)}`)}</span>
       </p>
       <p className="muted small">{t('sun.hint')}</p>
-    </section>
+    </>
   )
 }
 
-function PortTide({ port, day, now }: { port: HomePort; day: number; now: number }) {
+function PortTide({ port, day, now, sunAt }: { port: HomePort; day: number; now: number; sunAt: LatLon | null }) {
   const { t } = useI18n()
   const { seaLevel } = usePortTide(port)
   return (
     <TideSection
-      title={t('tide.portTitle', { port: port.name })}
+      title={sunAt ? t('tide.combinedTitle', { place: port.name }) : t('tide.portTitle', { port: port.name })}
       points={portLevels(port, seaLevel)}
       day={day}
       now={now}
       danger={port.dangerLevel}
       at={port}
       note={t('tide.portNote', { z0: Math.round(port.z0 * 100), v: Math.round(port.dangerLevel * 100) })}
-    />
+    >
+      {sunAt && <SunInfo at={sunAt} day={day} />}
+    </TideSection>
   )
 }
 
@@ -234,6 +237,9 @@ export function TidePage({ at, conditions, profile, underway }: { at: LatLon | n
   const day = startOfDay(now) + offset * DAY
   const port = profile.ports.find((p) => p.id === profile.activePortId) ?? profile.ports[0] ?? null
   const place = at ?? port
+  // 出港してからは現在地の潮位（出港前は出航地の潮位だけ。出航地がなければ現在地）
+  const hereLevels = (underway || !port) && conditions?.marine && conditions.marine.seaLevel.length > 0 ? conditions.marine.seaLevel : null
+  const hereFirst = hereLevels !== null
 
   return (
     <>
@@ -244,11 +250,18 @@ export function TidePage({ at, conditions, profile, underway }: { at: LatLon | n
           </button>
         ))}
       </div>
-      {place ? <SunCard at={place} day={day} /> : <p className="muted">{t('pos.waiting')}</p>}
-      {port && <PortTide port={port} day={day} now={now} />}
-      {/* 出港してからは、現在地の潮位も出す（出港前は、出航地の潮位だけ） */}
-      {(underway || !port) && conditions?.marine && conditions.marine.seaLevel.length > 0 && (
-        <TideSection title={t('tide.hereTitle')} points={conditions.marine.seaLevel} day={day} now={now} danger={null} note={t('tide.hereNote')} at={at ?? conditions.at} />
+      {/* 日の出・日の入りは、基準の場所（出港前は出航地、出港後は現在地）の潮位と1枚にまとめる */}
+      {hereFirst && hereLevels && place && (
+        <TideSection title={t('tide.combinedTitle', { place: t('tide.here') })} points={hereLevels} day={day} now={now} danger={null} note={t('tide.hereNote')} at={place}>
+          <SunInfo at={place} day={day} />
+        </TideSection>
+      )}
+      {port && <PortTide port={port} day={day} now={now} sunAt={hereFirst ? null : place} />}
+      {!port && !hereLevels && (
+        <section className="card">
+          <h2>{t('sun.title')}</h2>
+          {place ? <SunInfo at={place} day={day} /> : <p className="muted">{t('pos.waiting')}</p>}
+        </section>
       )}
       <p className="muted small">{t('tide.disclaimer')}</p>
     </>

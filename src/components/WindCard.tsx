@@ -98,10 +98,14 @@ export function WindCard({ weather, at, unit }: { weather: Weather | null; at: L
                     <span className="small muted">{fmtTime(h.t, LOCALES[lang])}</span>
                     <span title={w.label}>{w.icon}</span>
                     <WindArrow from={h.direction} size={24} />
-                    <span className="small">
+                    <span className="small hour-wind">
+                      <span className="hour-tag">{t('wind.avgShort')}</span>
                       <b>{v(h.speed)}</b>
                     </span>
-                    <span className="small muted">{v(h.gust)}</span>
+                    <span className="small hour-wind">
+                      <span className="hour-tag">{t('wind.gustShort')}</span>
+                      {v(h.gust)}
+                    </span>
                     {h.precipProb !== null && <span className="small muted">☔{Math.round(h.precipProb)}%</span>}
                   </div>
                 )

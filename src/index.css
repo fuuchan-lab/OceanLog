@@ -3627,3 +3627,62 @@ button.link {
   justify-content: space-between;
   gap: 8px;
 }
+
+/* 日の出・日の入りと潮位のカード: 時刻を折り返さず、満潮・干潮の欄がカードからはみ出さないようにする */
+.stats-4 .stat-value {
+  white-space: nowrap;
+  font-size: clamp(1.05rem, 5.2vw, 1.5rem);
+  font-variant-numeric: tabular-nums;
+}
+.stats-4 .stat-label {
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.extremes li {
+  min-width: 0;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 0.95rem;
+}
+.extremes {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.extremes li {
+  font-size: clamp(0.8rem, 3.6vw, 0.95rem);
+  justify-content: space-between;
+}
+
+/* 資格・船舶の保存ボタン（画面の下、ナビの上に固定） */
+.save-bar {
+  position: sticky;
+  bottom: calc(var(--dock-h, 64px) + 8px);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 14px;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.18);
+}
+.save-bar > span {
+  flex: 1;
+}
+.save-bar-dirty {
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+/* 風の予報: 数値の前に「平均」「瞬間」の小さな見出し */
+.hour-wind {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.15;
+}
+.hour-tag {
+  font-size: 0.65rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
