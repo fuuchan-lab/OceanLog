@@ -3726,3 +3726,10 @@ button.link {
   min-height: 40px;
   padding: 0 14px;
 }
+
+.save-bar-done {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  border-color: var(--ok-text);
+  font-weight: 700;
+}

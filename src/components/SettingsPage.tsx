@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { driveConfig } from '../drive.ts'
 import { formatPosition, parseCoord, type LatLon, type WindUnit, WIND_UNIT_LABEL } from '../geo.ts'
 import type { GoogleAuth } from '../hooks/useGoogleAuth.ts'
@@ -116,7 +116,33 @@ function PortForm({ initial, here, onSave, onDelete, onClose }: { initial: HomeP
 }
 
 /** 設定: アカウント・出航地・単位・地図・言語・配色・データの出典 */
-export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, settings, onSettings, here, msil, onMsil, onLang, theme, onTheme }: Props) {
+export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: onProfileRaw, settings, onSettings: onSettingsRaw, here, msil, onMsil, onLang: onLangRaw, theme, onTheme: onThemeRaw }: Props) {
+  // 設定は変えるとすぐ保存する。保存したことが分かるよう、画面の下に「保存しました」を少しの間出す
+  const [savedAt, setSavedAt] = useState<number | null>(null)
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const flash = () => {
+    setSavedAt(Date.now())
+    navigator.vibrate?.(20)
+    clearTimeout(flashTimer.current)
+    flashTimer.current = setTimeout(() => setSavedAt(null), 4000)
+  }
+  useEffect(() => () => clearTimeout(flashTimer.current), [])
+  const onProfile = (update: (p: Profile) => Profile) => {
+    onProfileRaw(update)
+    flash()
+  }
+  const onSettings = (s: Settings) => {
+    onSettingsRaw(s)
+    flash()
+  }
+  const onLang = (l: Lang) => {
+    onLangRaw(l)
+    flash()
+  }
+  const onTheme = (v: ThemePreference) => {
+    onThemeRaw(v)
+    flash()
+  }
   const { t, lang } = useI18n()
   const [editing, setEditing] = useState<{ port: HomePort; isNew: boolean } | null>(null)
   const [tileUrl, setTileUrl] = useState(settings.customTileUrl)
@@ -128,6 +154,7 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, se
     setTileUrl(settings.customTileUrl)
     setTileAttr(settings.customTileAttribution)
   }
+  const tileDirty = tileUrl.trim() !== settings.customTileUrl || tileAttr.trim() !== settings.customTileAttribution
 
   const savePort = (port: HomePort, isNew: boolean) => {
     onProfile((p) => ({
@@ -251,11 +278,11 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, se
         </label>
         {tileUrl && !isValidTileUrl(tileUrl) && <p className="error small">{t('settings.customTilesInvalid')}</p>}
         <button
-          className="secondary"
-          disabled={tileUrl !== '' && !isValidTileUrl(tileUrl)}
+          className={tileDirty ? 'primary' : 'secondary'}
+          disabled={!tileDirty || (tileUrl !== '' && !isValidTileUrl(tileUrl))}
           onClick={() => onSettings({ ...settings, customTileUrl: tileUrl.trim(), customTileAttribution: tileAttr.trim() })}
         >
-          {t('common.save')}
+          {tileDirty ? t('common.save') : `✓ ${t('msil.savedButton')}`}
         </button>
       </section>
 
@@ -359,6 +386,14 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, se
           }
         />
       )}
+      {/* 保存の状態（画面の下に固定） */}
+      <div className={`save-bar${savedAt ? ' save-bar-done' : ''}`} role="status" aria-live="polite">
+        <span className="small">
+          {savedAt
+            ? `✅ ${t('settings.saved')}${auth.account ? ' ' + t('docs.savedDrive') : ''}`
+            : `✓ ${t('settings.autoSave')}`}
+        </span>
+      </div>
     </>
   )
 }
