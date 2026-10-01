@@ -5,6 +5,7 @@
  * - OpenStreetMap（© OpenStreetMap contributors, ODbL）。タイルの一括ダウンロードは利用規約で禁止されているので、保存の対象にしない
  * - OpenSeaMap 海図記号（© OpenSeaMap contributors, CC BY-SA）
  * - GEBCO 水深（出典: GEBCO Compilation Group）。WMS なので保存の対象にしない
+ * - 国土地理院 沿岸海域土地条件図（等深線・海底の地形。一部の沿岸だけ、ズーム14〜16。出典: 国土地理院）
  */
 import type { LatLon } from './geo.ts'
 import type { BaseLayer } from './settings.ts'
@@ -44,6 +45,19 @@ export const SEAMARKS: TileSource = {
   maxZoom: 18,
   downloadable: true,
 }
+
+/**
+ * 国土地理院の沿岸海域土地条件図（等深線と海底の地形の分類）。平成元年以降の調査（ccm1）と、昭和63年以前の調査（ccm2）。
+ * 整備されているのは一部の沿岸だけで、タイルはズーム14〜16。地図に半透明で重ねる
+ */
+export const GSI_COASTAL: TileSource[] = ['ccm1', 'ccm2'].map((id) => ({
+  url: `https://cyberjapandata.gsi.go.jp/xyz/${id}/{z}/{x}/{y}.png`,
+  attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>（沿岸海域土地条件図）',
+  maxZoom: 16,
+  downloadable: true,
+}))
+/** 沿岸海域土地条件図のタイルがある、いちばん小さいズーム */
+export const GSI_COASTAL_MIN_ZOOM = 14
 
 export const GEBCO_WMS = {
   url: 'https://wms.gebco.net/mapserv?',

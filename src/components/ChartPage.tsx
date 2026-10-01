@@ -189,6 +189,11 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
               <input type="checkbox" checked={settings.seamarks} onChange={(e) => onSettings({ ...settings, seamarks: e.target.checked })} />
               {t('layer.seamarks')}
             </label>
+            <label className="check">
+              <input type="checkbox" checked={settings.gsiDepth} onChange={(e) => onSettings({ ...settings, gsiDepth: e.target.checked })} />
+              {t('layer.gsiDepth')}
+            </label>
+            {settings.gsiDepth && <p className="muted small">{t('layer.gsiDepthNote')}</p>}
             <p className="small legend-line">
               <b>✚</b> {t('hazard.submerged')} · <b>✳</b> {t('hazard.awash')} · <b>✱</b> {t('hazard.covers')}
             </p>

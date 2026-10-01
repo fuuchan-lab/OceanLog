@@ -13,6 +13,8 @@ export interface Settings {
   customTileAttribution: string
   /** 航行モード中は、地図をスマホの向き（進行方向）に合わせて回す。false なら北が上 */
   headingUp: boolean
+  /** 国土地理院の沿岸海域土地条件図（等深線）を重ねる */
+  gsiDepth: boolean
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -22,6 +24,7 @@ export const DEFAULT_SETTINGS: Settings = {
   customTileUrl: '',
   customTileAttribution: '',
   headingUp: true,
+  gsiDepth: false,
 }
 
 export const SETTINGS_KEY = 'oceanlog-settings'
@@ -45,6 +48,7 @@ export function settingsFrom(value: unknown): Settings {
     customTileUrl: typeof v.customTileUrl === 'string' ? v.customTileUrl : '',
     customTileAttribution: typeof v.customTileAttribution === 'string' ? v.customTileAttribution : '',
     headingUp: v.headingUp !== false,
+    gsiDepth: v.gsiDepth === true,
   }
 }
 

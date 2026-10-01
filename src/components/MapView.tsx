@@ -7,7 +7,7 @@ import type { LatLon } from '../geo.ts'
 import type { Fix } from '../hooks/useGeolocation.ts'
 import type { HomePort } from '../profile.ts'
 import { isValidTileUrl, type Settings } from '../settings.ts'
-import { BASE_LAYERS, GEBCO_WMS, SEAMARKS } from '../tiles.ts'
+import { BASE_LAYERS, GEBCO_WMS, GSI_COASTAL, GSI_COASTAL_MIN_ZOOM, SEAMARKS } from '../tiles.ts'
 import { MARK_ICONS, type Mark, type TrackPoint } from '../types.ts'
 import { splitSegments } from '../voyage.ts'
 import type { Hazard, WaterLevel } from '../hazards.ts'
@@ -107,6 +107,7 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
   const layers = useRef<{
     base?: L.TileLayer
     seamarks?: L.TileLayer
+    depth?: L.TileLayer[]
     custom?: L.TileLayer
     ship?: L.Marker
     accuracy?: L.Circle
@@ -158,6 +159,8 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
     l.base?.remove()
     l.seamarks?.remove()
     l.custom?.remove()
+    for (const d of l.depth ?? []) d.remove()
+    l.depth = []
     if (settings.baseLayer === 'gebco') {
       l.base = L.tileLayer.wms(GEBCO_WMS.url, { layers: GEBCO_WMS.layers, format: 'image/png', attribution: GEBCO_WMS.attribution, maxZoom: 18 })
     } else {
@@ -165,13 +168,19 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
       l.base = L.tileLayer(src.url, { attribution: src.attribution, maxZoom: 18, maxNativeZoom: src.maxZoom })
     }
     l.base.addTo(m)
+    // 等深線（地理院の沿岸海域土地条件図）。タイルはズーム14〜16だけなので、13 では 14 のタイルを縮めて使う
+    if (settings.gsiDepth) {
+      l.depth = GSI_COASTAL.map((src) =>
+        L.tileLayer(src.url, { attribution: src.attribution, minZoom: GSI_COASTAL_MIN_ZOOM - 1, minNativeZoom: GSI_COASTAL_MIN_ZOOM, maxNativeZoom: src.maxZoom, maxZoom: 18, opacity: 0.7 }).addTo(m),
+      )
+    }
     if (isValidTileUrl(settings.customTileUrl)) {
       l.custom = L.tileLayer(settings.customTileUrl, { attribution: settings.customTileAttribution, maxZoom: 18, opacity: 0.9 }).addTo(m)
     }
     if (settings.seamarks) {
       l.seamarks = L.tileLayer(SEAMARKS.url, { attribution: SEAMARKS.attribution, maxZoom: 18 }).addTo(m)
     }
-  }, [settings.baseLayer, settings.seamarks, settings.customTileUrl, settings.customTileAttribution])
+  }, [settings.baseLayer, settings.seamarks, settings.customTileUrl, settings.customTileAttribution, settings.gsiDepth])
 
   // 自船の位置
   useEffect(() => {
