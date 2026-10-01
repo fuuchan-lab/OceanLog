@@ -3711,3 +3711,18 @@ button.link {
 .bar-col.hour-now > span:first-child {
   font-weight: 800;
 }
+
+/* 波・気象・日没・干満の上: どこの情報かと、現在地・出航地の切り替え */
+.basis-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.basis-bar .basis {
+  flex: 1 1 12em;
+}
+.basis-seg button {
+  min-height: 40px;
+  padding: 0 14px;
+}

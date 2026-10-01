@@ -153,8 +153,16 @@ export default function App() {
   // 「出港」を押してから帰港するまでが「航行モード」
   const underway = log.activeTrack !== null
   // 天気・波・潮・日の出の基準の場所: 海に出るまでは出航地、出港してからは現在地（出航地が未登録なら現在地）
-  const basis = underway ? fix : (port ?? fix)
-  const basisLabel = underway ? t('basis.underway') : !port ? t('basis.here') : t('basis.port', { port: port.name })
+  // 波・気象と日没・干満の画面では、現在地と出航地を切り替えられる（出港・帰港した時は、自動の選択に戻す）
+  const [basisChoice, setBasisChoice] = useState<'here' | 'port' | null>(null)
+  const [basisFor, setBasisFor] = useState(underway)
+  if (basisFor !== underway) {
+    setBasisFor(underway)
+    setBasisChoice(null)
+  }
+  const basisIsHere = !port || (basisChoice ?? (underway ? 'here' : 'port')) === 'here'
+  const basis = basisIsHere ? fix : port
+  const basisLabel = basisIsHere ? (underway ? t('basis.underway') : t('basis.here')) : t('basis.port', { port: port.name })
   const conditions = useConditions(basis)
   // 危険物（暗岩・洗岩など）: 航行モード中は現在地、それ以外は見ている地図の周り
   const [mapCenter, setMapCenter] = useState<LatLon | null>(null)
@@ -248,10 +256,22 @@ export default function App() {
       )}
 
       {(view === 'sea' || view === 'tide') && (
-        <p className="basis" role="note">
-          📍 {basisLabel}
-          {!underway && port && <span className="muted small"> · {t('basis.hint')}</span>}
-        </p>
+        <div className="basis-bar">
+          <p className="basis" role="note">
+            📍 {basisLabel}
+          </p>
+          {port && (
+            <div className="seg basis-seg" role="radiogroup" aria-label={t('basis.choose')}>
+              <button role="radio" aria-checked={basisIsHere} className={basisIsHere ? 'on' : ''} onClick={() => setBasisChoice('here')}>
+                📍 {t('basis.optHere')}
+              </button>
+              <button role="radio" aria-checked={!basisIsHere} className={!basisIsHere ? 'on' : ''} onClick={() => setBasisChoice('port')}>
+                🏠 {t('basis.optPort')}
+              </button>
+            </div>
+          )}
+          {basisIsHere && !fix && <p className="muted small">{t('pos.waiting')}</p>}
+        </div>
       )}
 
       {view === 'sea' && (
@@ -275,7 +295,7 @@ export default function App() {
         </>
       )}
 
-      {view === 'tide' && <TidePage at={basis ?? data?.at ?? null} conditions={data} profile={profile} underway={underway} />}
+      {view === 'tide' && <TidePage at={basis ?? data?.at ?? null} conditions={data} profile={profile} underway={basisIsHere} />}
 
       {view === 'docs' && <DocsPage profile={profile} onChange={updateProfile} signedIn={auth.account !== null} />}
 

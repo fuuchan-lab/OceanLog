@@ -237,7 +237,7 @@ export function TidePage({ at, conditions, profile, underway }: { at: LatLon | n
   const day = startOfDay(now) + offset * DAY
   const port = profile.ports.find((p) => p.id === profile.activePortId) ?? profile.ports[0] ?? null
   const place = at ?? port
-  // 出港してからは現在地の潮位（出港前は出航地の潮位だけ。出航地がなければ現在地）
+  // 現在地を表示している時は現在地の潮位も（出航地を表示している時は出航地の潮位だけ。出航地がなければ現在地）
   const hereLevels = (underway || !port) && conditions?.marine && conditions.marine.seaLevel.length > 0 ? conditions.marine.seaLevel : null
   const hereFirst = hereLevels !== null
 
