@@ -8,7 +8,7 @@ import { useI18n } from '../i18n/useI18n.ts'
 import type { HomePort, Profile } from '../profile.ts'
 import { portLevels } from '../safety.ts'
 import { monotonePath } from '../smoothPath.ts'
-import { moonInfo, sunTimes, tideName } from '../sun.ts'
+import { moonInfo, sunTimes, tideName, type SunTimes } from '../sun.ts'
 import { findExtremes, levelAt, tideState } from '../tide.ts'
 import type { SeaLevelPoint } from '../weather.ts'
 
@@ -24,12 +24,35 @@ const W = 340
 const H = 150
 const PAD_L = 30
 const PAD_R = 8
-const PAD_T = 16
+const PAD_T = 30
 const PAD_B = 22
 
-/** 1日の潮位のグラフ（0時〜24時）。満潮・干潮の時刻と、港の危険潮位の線 */
-function TideChart({ points, day, now, danger, unit }: { points: SeaLevelPoint[]; day: number; now: number; danger: number | null; unit: string }) {
+const MIN = 60_000
+
+/**
+ * 昼と夜の背景（左から右へのグラデーションの区切り、0〜1）。
+ * 夜明け（薄明の始まり）から日の出までと、日の入りから日暮れ（薄明の終わり）までを、なだらかに変える
+ */
+function skyStops(sun: SunTimes | null, from: number): { at: number; day: boolean }[] {
+  if (!sun || sun.sunrise === null || sun.sunset === null) return [{ at: 0, day: true }, { at: 1, day: true }]
+  const f = (tm: number) => Math.min(1, Math.max(0, (tm - from) / DAY))
+  const dawn = sun.dawn ?? sun.sunrise - 30 * MIN
+  const dusk = sun.dusk ?? sun.sunset + 30 * MIN
+  return [
+    { at: 0, day: false },
+    { at: f(dawn), day: false },
+    { at: f(sun.sunrise), day: true },
+    { at: f(sun.sunset), day: true },
+    { at: f(dusk), day: false },
+    { at: 1, day: false },
+  ]
+}
+
+/** 1日の潮位のグラフ（0時〜24時）。昼は明るく夜は暗い背景、日の出・日の入り、満潮・干潮の時刻と、港の危険潮位の線 */
+function TideChart({ points, day, now, danger, unit, at }: { points: SeaLevelPoint[]; day: number; now: number; danger: number | null; unit: string; at: LatLon | null }) {
   const { t, lang } = useI18n()
+  const sun = at ? sunTimes(day + DAY / 2, at.lat, at.lon) : null
+  const skyId = `tide-sky-${Math.round(day / DAY)}-${at ? `${at.lat.toFixed(3)}-${at.lon.toFixed(3)}` : 'none'}`
   const from = day
   const to = day + DAY
   const inDay = points.filter((p) => p.t >= from - 3_600_000 && p.t <= to + 3_600_000)
@@ -52,7 +75,28 @@ function TideChart({ points, day, now, danger, unit }: { points: SeaLevelPoint[]
         <clipPath id="tide-clip">
           <rect x={PAD_L} y={0} width={W - PAD_L - PAD_R} height={H} />
         </clipPath>
+        <linearGradient id={skyId} x1="0" x2="1" y1="0" y2="0">
+          {skyStops(sun, from).map((s, i) => (
+            <stop key={i} offset={s.at} className={s.day ? 'sky-day' : 'sky-night'} />
+          ))}
+        </linearGradient>
       </defs>
+      {/* 昼は明るく、夜は暗く。日の出・日の入りのあたりはグラデーション */}
+      <rect x={PAD_L} y={PAD_T - 8} width={W - PAD_L - PAD_R} height={H - PAD_B - PAD_T + 8} fill={`url(#${skyId})`} className="tide-sky" />
+      {sun &&
+        ([
+          ['sunrise', sun.sunrise, 'start'],
+          ['sunset', sun.sunset, 'end'],
+        ] as const).map(([kind, tm]) =>
+          tm !== null && tm >= from && tm <= to ? (
+            <g key={kind}>
+              <line x1={x(tm)} x2={x(tm)} y1={PAD_T - 8} y2={H - PAD_B} className="sun-line" />
+              <text x={x(tm)} y={10} textAnchor="middle" className="sun-label">
+                {kind === 'sunrise' ? '☀↑' : '☀↓'} {fmtTime(tm, LOCALES[lang])}
+              </text>
+            </g>
+          ) : null,
+        )}
       {ticks.map((v) => (
         <g key={v}>
           <line x1={PAD_L} x2={W - PAD_R} y1={y(v)} y2={y(v)} className="grid-line" />
@@ -66,7 +110,7 @@ function TideChart({ points, day, now, danger, unit }: { points: SeaLevelPoint[]
           {h}
         </text>
       ))}
-      <text x={4} y={10} className="axis-label">
+      <text x={4} y={PAD_T - 10} className="axis-label">
         {unit}
       </text>
       {danger !== null && (
@@ -97,7 +141,7 @@ function TideChart({ points, day, now, danger, unit }: { points: SeaLevelPoint[]
   )
 }
 
-function TideSection({ title, points, day, now, danger, note }: { title: string; points: SeaLevelPoint[]; day: number; now: number; danger: number | null; note?: string }) {
+function TideSection({ title, points, day, now, danger, note, at }: { title: string; points: SeaLevelPoint[]; day: number; now: number; danger: number | null; note?: string; at: LatLon | null }) {
   const { t, lang } = useI18n()
   const extremes = findExtremes(points).filter((x) => x.t >= day && x.t <= day + DAY)
   const state = tideState(findExtremes(points), now)
@@ -116,7 +160,10 @@ function TideSection({ title, points, day, now, danger, note }: { title: string;
           </span>
         </p>
       )}
-      <TideChart points={points} day={day} now={now} danger={danger} unit={t('tide.unitM')} />
+      <TideChart points={points} day={day} now={now} danger={danger} unit={t('tide.unitM')} at={at} />
+      <p className="muted small sky-legend">
+        <span className="sky-swatch sky-swatch-day" aria-hidden="true" /> {t('tide.skyDay')} <span className="sky-swatch sky-swatch-night" aria-hidden="true" /> {t('tide.skyNight')} · ☀↑ {t('sun.sunrise')} · ☀↓ {t('sun.sunset')}
+      </p>
       <ul className="extremes">
         {extremes.map((e) => (
           <li key={e.t} className={e.kind}>
@@ -173,6 +220,7 @@ function PortTide({ port, day, now }: { port: HomePort; day: number; now: number
       day={day}
       now={now}
       danger={port.dangerLevel}
+      at={port}
       note={t('tide.portNote', { z0: Math.round(port.z0 * 100), v: Math.round(port.dangerLevel * 100) })}
     />
   )
@@ -200,7 +248,7 @@ export function TidePage({ at, conditions, profile, underway }: { at: LatLon | n
       {port && <PortTide port={port} day={day} now={now} />}
       {/* 出港してからは、現在地の潮位も出す（出港前は、出航地の潮位だけ） */}
       {(underway || !port) && conditions?.marine && conditions.marine.seaLevel.length > 0 && (
-        <TideSection title={t('tide.hereTitle')} points={conditions.marine.seaLevel} day={day} now={now} danger={null} note={t('tide.hereNote')} />
+        <TideSection title={t('tide.hereTitle')} points={conditions.marine.seaLevel} day={day} now={now} danger={null} note={t('tide.hereNote')} at={at ?? conditions.at} />
       )}
       <p className="muted small">{t('tide.disclaimer')}</p>
     </>

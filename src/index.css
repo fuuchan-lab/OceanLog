@@ -3534,3 +3534,55 @@ button.link {
   flex-direction: row;
   align-items: center;
 }
+
+/* 潮位のグラフの背景: 昼は明るく、夜は暗く（日の出・日の入りのあたりはグラデーション） */
+:root,
+:root[data-theme='light'] {
+  --sky-day: #fff4c2;
+  --sky-night: #b4c2db;
+}
+:root[data-theme='dark'] {
+  --sky-day: #33404f;
+  --sky-night: #000000;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --sky-day: #33404f;
+    --sky-night: #000000;
+  }
+}
+.sky-day {
+  stop-color: var(--sky-day);
+}
+.sky-night {
+  stop-color: var(--sky-night);
+}
+.sun-line {
+  stroke: #d97706;
+  stroke-width: 1.5;
+  stroke-dasharray: 3 3;
+}
+.sun-label {
+  fill: var(--text);
+  font-size: 10px;
+  font-weight: 700;
+}
+.sky-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.sky-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+.sky-swatch-day {
+  background: var(--sky-day);
+}
+.sky-swatch-night {
+  background: var(--sky-night);
+}
