@@ -160,7 +160,8 @@ export async function fetchWeather(lat: number, lon: number): Promise<Weather> {
   const hourly: WindHour[] = h.time.flatMap((t, i): WindHour[] => {
     const speed = num(h.wind_speed_10m[i])
     const direction = num(h.wind_direction_10m[i])
-    if (t * 1000 < now - HOUR || speed === null || direction === null) return []
+    // 2時間前から（今と比べて、風が強まっているか分かるように）
+    if (t * 1000 < pastFrom(now) || speed === null || direction === null) return []
     return [
       {
         t: t * 1000,
@@ -217,6 +218,9 @@ export async function fetchMarine(lat: number, lon: number): Promise<Marine> {
   return parseMarine((await res.json()) as MarineResponse, Date.now())
 }
 
+/** 予報の表の始まり: 今の時間（00分）の2時間前 */
+export const pastFrom = (now: number) => Math.floor(now / HOUR) * HOUR - 2 * HOUR
+
 export function parseMarine(data: MarineResponse, now: number): Marine {
   const c = data.current ?? {}
   // 海流は km/h で返るので m/s にする
@@ -224,7 +228,7 @@ export function parseMarine(data: MarineResponse, now: number): Marine {
   const h = data.hourly
   const times = h?.time ?? []
   const waves = times.flatMap((t, i) =>
-    t * 1000 >= now - HOUR && t * 1000 <= now + 24 * HOUR
+    t * 1000 >= pastFrom(now) && t * 1000 <= now + 24 * HOUR
       ? [{ t: t * 1000, height: num(h?.wave_height?.[i]), period: num(h?.wave_period?.[i]), direction: num(h?.wave_direction?.[i]) }]
       : [],
   )

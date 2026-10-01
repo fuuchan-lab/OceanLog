@@ -3686,3 +3686,28 @@ button.link {
   color: var(--muted);
   white-space: nowrap;
 }
+
+/* 1枚のカードの中の小見出し（風と波など） */
+.sub-title {
+  margin: 6px 0 0;
+  padding-top: 8px;
+  border-top: 2px solid var(--border);
+  font-size: 1.05rem;
+}
+.card > h2 + .sub-title {
+  border-top: 0;
+  padding-top: 0;
+}
+
+/* 風・波の予報の表: 2時間前は薄く、今は太い枠 */
+.hour.hour-past,
+.bar-col.hour-past {
+  opacity: 0.55;
+}
+.hour.hour-now {
+  border-color: var(--accent);
+  border-width: 3px;
+}
+.bar-col.hour-now > span:first-child {
+  font-weight: 800;
+}

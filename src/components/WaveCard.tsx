@@ -4,8 +4,8 @@ import { LOCALES } from '../i18n/context.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 import type { Marine } from '../weather.ts'
 
-/** 波の高さ・周期・向き、うねり、海面水温、海流と、今後の波高の予報 */
-export function WaveCard({ marine, dangerWave }: { marine: Marine | null; dangerWave: number | null }) {
+/** 波の高さ・周期・向き、うねり、海面水温、海流と、今後の波高の予報（風のカードの中に出す） */
+export function WaveInfo({ marine, dangerWave }: { marine: Marine | null; dangerWave: number | null }) {
   const { t, lang } = useI18n()
   const n = marine?.now
   const dir = (d: number | null) => (d === null ? '' : t('wave.from', { dir: compassPoint(d, lang) }))
@@ -14,8 +14,8 @@ export function WaveCard({ marine, dangerWave }: { marine: Marine | null; danger
   const maxH = Math.max(...heights, dangerWave ?? 0, 0.5)
 
   return (
-    <section className="card">
-      <h2>{t('wave.title')}</h2>
+    <>
+      <h3 className="sub-title">🌊 {t('wave.title')}</h3>
       {hasData ? (
         <>
           <div className="stats">
@@ -63,7 +63,7 @@ export function WaveCard({ marine, dangerWave }: { marine: Marine | null; danger
                 .filter((_, i) => i % 2 === 0)
                 .slice(0, 12)
                 .map((w) => (
-                  <div className="bar-col" key={w.t}>
+                  <div className={`bar-col${w.t + 3_600_000 <= Date.now() ? ' hour-past' : w.t <= Date.now() ? ' hour-now' : ''}`} key={w.t}>
                     <span className="small">{fmtNum(w.height)}</span>
                     <div className="bar-track">
                       <div
@@ -77,11 +77,12 @@ export function WaveCard({ marine, dangerWave }: { marine: Marine | null; danger
                 ))}
             </div>
           )}
+          {heights.length > 0 && <p className="muted small">{t('wave.barsHint')}</p>}
           {dangerWave && <p className="muted small">{t('wave.limitHint', { v: fmtNum(dangerWave) })}</p>}
         </>
       ) : (
         <p className="muted">{t('wave.noData')}</p>
       )}
-    </section>
+    </>
   )
 }

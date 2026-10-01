@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { fmtNum, fmtTime } from '../format.ts'
 import { beaufort, compassPoint, convertWind, WIND_UNIT_LABEL, type LatLon, type WindUnit } from '../geo.ts'
 import type { Weather } from '../weather.ts'
 import { LOCALES } from '../i18n/context.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 import { describeWeather } from '../weather.ts'
+
+const HOUR_MS = 3_600_000
 
 /** 風向の矢印（風が吹いていく向きに向ける。北=0 から吹く風は南へ） */
 function WindArrow({ from, size = 40 }: { from: number; size?: number }) {
@@ -63,7 +65,7 @@ function WindyEmbed({ at }: { at: LatLon }) {
 }
 
 /** 風速・最大瞬間風速・風向と、今後の風の予報。Windy のマップも開ける */
-export function WindCard({ weather, at, unit }: { weather: Weather | null; at: LatLon | null; unit: WindUnit }) {
+export function WindCard({ weather, at, unit, children }: { weather: Weather | null; at: LatLon | null; unit: WindUnit; children?: ReactNode }) {
   const { t, lang } = useI18n()
   const [windyOpen, setWindyOpen] = useState(false)
   const u = WIND_UNIT_LABEL[unit]
@@ -71,7 +73,8 @@ export function WindCard({ weather, at, unit }: { weather: Weather | null; at: L
 
   return (
     <section className="card">
-      <h2>{t('wind.title')}</h2>
+      <h2>{t('windWave.title')}</h2>
+      <h3 className="sub-title">🌬️ {t('wind.title')}</h3>
       {weather ? (
         <>
           <div className="wind-now">
@@ -94,7 +97,7 @@ export function WindCard({ weather, at, unit }: { weather: Weather | null; at: L
               .map((h) => {
                 const w = describeWeather(h.code, h.isDay, t)
                 return (
-                  <div className="hour" role="listitem" key={h.t}>
+                  <div className={`hour${h.t + HOUR_MS <= Date.now() ? ' hour-past' : h.t <= Date.now() ? ' hour-now' : ''}`} role="listitem" key={h.t}>
                     <span className="small muted">{fmtTime(h.t, LOCALES[lang])}</span>
                     <span title={w.label}>{w.icon}</span>
                     <WindArrow from={h.direction} size={24} />
@@ -116,6 +119,8 @@ export function WindCard({ weather, at, unit }: { weather: Weather | null; at: L
       ) : (
         <p className="muted">{t('cond.noData')}</p>
       )}
+      {/* 波（同じカードの中にまとめる） */}
+      {children}
       {at && (
         <>
           <div className="row gap">
