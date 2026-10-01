@@ -11,9 +11,8 @@ import { PositionCard } from './components/PositionCard.tsx'
 import { SafetyCard } from './components/SafetyCard.tsx'
 import { SettingsPage } from './components/SettingsPage.tsx'
 import { TidePage } from './components/TidePage.tsx'
-import { WaveInfo } from './components/WaveCard.tsx'
+import { WaveCard } from './components/WaveCard.tsx'
 import { WeatherCard } from './components/WeatherCard.tsx'
-import { WindCard } from './components/WindCard.tsx'
 import type { LatLon } from './geo.ts'
 import { useConditions } from './hooks/useConditions.ts'
 import { useGeolocation } from './hooks/useGeolocation.ts'
@@ -286,10 +285,8 @@ export default function App() {
             onSelectPort={(id) => updateProfile((p) => ({ ...p, activePortId: id }))}
             onOpenSettings={() => go('settings')}
           />
-          <WindCard weather={data?.weather ?? null} at={basis ?? data?.at ?? null} unit={settings.windUnit}>
-            <WaveInfo marine={data?.marine ?? null} dangerWave={profile.boat.dangerWave} />
-          </WindCard>
-          <WeatherCard state={conditions} onRefresh={() => void conditions.refresh()} />
+          <WeatherCard state={conditions} onRefresh={() => void conditions.refresh()} unit={settings.windUnit} at={basis ?? data?.at ?? null} />
+          <WaveCard marine={data?.marine ?? null} dangerWave={profile.boat.dangerWave} />
           <PositionCard geo={geo} />
           <p className="muted small">{t('sea.sources')}</p>
         </>

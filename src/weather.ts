@@ -160,8 +160,8 @@ export async function fetchWeather(lat: number, lon: number): Promise<Weather> {
   const hourly: WindHour[] = h.time.flatMap((t, i): WindHour[] => {
     const speed = num(h.wind_speed_10m[i])
     const direction = num(h.wind_direction_10m[i])
-    // 2時間前から（今と比べて、風が強まっているか分かるように）
-    if (t * 1000 < pastFrom(now) || speed === null || direction === null) return []
+    // 気圧のグラフと同じく6時間前から（風が強まっているか分かるように）
+    if (t * 1000 < now - 6.5 * HOUR || speed === null || direction === null) return []
     return [
       {
         t: t * 1000,

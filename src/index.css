@@ -3890,3 +3890,75 @@ button.sync-now.is-failed {
     animation: none;
   }
 }
+
+/* 天気・風・気圧をそろえた図 */
+.timeline {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.timeline-now {
+  fill: color-mix(in srgb, var(--now) 14%, transparent);
+  stroke: var(--now);
+  stroke-width: 2;
+  animation: now-glow-svg 2.4s ease-in-out infinite;
+}
+@keyframes now-glow-svg {
+  0%,
+  100% {
+    stroke-opacity: 1;
+    fill-opacity: 1;
+  }
+  50% {
+    stroke-opacity: 0.25;
+    fill-opacity: 0.4;
+  }
+}
+.timeline-row {
+  font-size: 9px;
+  fill: var(--muted);
+  font-weight: 700;
+}
+.timeline-time {
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--text);
+}
+.timeline-col-now .timeline-time {
+  fill: var(--now);
+  font-weight: 800;
+}
+.timeline-icon {
+  font-size: 15px;
+}
+.timeline-arrow {
+  fill: var(--accent);
+}
+.timeline-speed {
+  font-size: 11px;
+  font-weight: 800;
+  fill: var(--text);
+}
+.timeline-gust {
+  font-size: 10px;
+  fill: var(--muted);
+}
+.timeline-past {
+  opacity: 0.55;
+}
+@media (prefers-reduced-motion: reduce) {
+  .timeline-now {
+    animation: none;
+  }
+}
+
+.timeline-hpa {
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--text);
+}
+.timeline-hpa-now {
+  fill: var(--now);
+  font-weight: 800;
+}
