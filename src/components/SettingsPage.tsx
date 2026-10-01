@@ -210,6 +210,14 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
             <button className="primary" disabled={auth.connecting} onClick={() => void auth.login()}>
               {auth.connecting ? t('google.connecting') : t('account.login')}
             </button>
+            {/* ログインで「origin_mismatch」が出た時に、Google Cloud に登録するアドレスが分かるように */}
+            <details className="details small">
+              <summary>{t('account.originTitle')}</summary>
+              <p>{t('account.originHelp')}</p>
+              <p>
+                <code>{location.origin}</code>
+              </p>
+            </details>
           </>
         )}
       </section>
