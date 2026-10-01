@@ -22,7 +22,7 @@ function WindArrow({ from, size = 40 }: { from: number; size?: number }) {
 
 type Overlay = 'wind' | 'gust' | 'waves' | 'pressure' | 'rain'
 
-/** Windy の埋め込み表示（Windy 公式の無料の埋め込み。開いた時にだけ読み込む） */
+/** Windy の埋め込み表示（Windy 公式の無料の埋め込み） */
 function WindyEmbed({ at }: { at: LatLon }) {
   const { t } = useI18n()
   const [overlay, setOverlay] = useState<Overlay>('wind')
@@ -64,10 +64,9 @@ function WindyEmbed({ at }: { at: LatLon }) {
   )
 }
 
-/** 風速・最大瞬間風速・風向と、今後の風の予報。Windy のマップも開ける */
+/** 風速・最大瞬間風速・風向と、今後の風の予報。Windy のマップもいつも表示する */
 export function WindCard({ weather, at, unit, children }: { weather: Weather | null; at: LatLon | null; unit: WindUnit; children?: ReactNode }) {
   const { t, lang } = useI18n()
-  const [windyOpen, setWindyOpen] = useState(false)
   const u = WIND_UNIT_LABEL[unit]
   const v = (ms: number) => fmtNum(convertWind(ms, unit), unit === 'ms' ? 1 : 0)
 
@@ -122,17 +121,8 @@ export function WindCard({ weather, at, unit, children }: { weather: Weather | n
       {/* 波（同じカードの中にまとめる） */}
       {children}
       {at && (
-        <>
-          <div className="row gap">
-            <button className="secondary" onClick={() => setWindyOpen((o) => !o)}>
-              🌬️ {windyOpen ? t('windy.close') : t('windy.open')}
-            </button>
-            <a className="button secondary" href={`https://www.windy.com/${at.lat.toFixed(3)}/${at.lon.toFixed(3)}?${at.lat.toFixed(3)},${at.lon.toFixed(3)},9`} target="_blank" rel="noopener">
-              {t('windy.app')}
-            </a>
-          </div>
-          {windyOpen && <WindyEmbed at={at} />}
-        </>
+        // Windy のマップは、いつも表示しておく
+        <WindyEmbed at={at} />
       )}
     </section>
   )
