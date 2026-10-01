@@ -2,6 +2,7 @@
  * 出航地（マザーポート）とボートの情報。Google ドライブの profile.json で、同じアカウントの端末の間で共有する。
  */
 import { newId } from './device.ts'
+import { DEFAULT_EQUIPMENT, parseEquipment, type EquipmentSettings } from './equipment.ts'
 
 export interface HomePort {
   id: string
@@ -73,6 +74,8 @@ export interface Profile {
   ports: HomePort[]
   boat: Boat
   docs: Docs
+  /** 法定備品のチェックリスト */
+  equipment: EquipmentSettings
   /** 出港時・安全の表示に使う出航地 */
   activePortId: string | null
   updatedAt: number
@@ -82,7 +85,7 @@ export const EMPTY_BOAT: Boat = { type: 'boat', name: '', registration: '', phot
 
 export const EMPTY_DOCS: Docs = { items: [], licenseType: '', licenseExpiry: '', inspectionExpiry: '' }
 
-export const EMPTY_PROFILE: Profile = { ports: [], boat: EMPTY_BOAT, docs: EMPTY_DOCS, activePortId: null, updatedAt: 0 }
+export const EMPTY_PROFILE: Profile = { ports: [], boat: EMPTY_BOAT, docs: EMPTY_DOCS, equipment: DEFAULT_EQUIPMENT, activePortId: null, updatedAt: 0 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -130,6 +133,7 @@ export function parseProfile(value: unknown): Profile {
       daylightOnly: b.daylightOnly === true,
     },
     docs: parseDocs(v.docs),
+    equipment: parseEquipment(v.equipment),
     activePortId: typeof v.activePortId === 'string' && ports.some((p) => p.id === v.activePortId) ? v.activePortId : null,
     updatedAt: numOr(v.updatedAt, 0),
   }

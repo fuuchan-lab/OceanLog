@@ -3586,3 +3586,44 @@ button.link {
 .sky-swatch-night {
   background: var(--sky-night);
 }
+
+/* 法定備品チェックリスト */
+.equip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.equip-list li {
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.equip-list li.equip-done {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+}
+.equip-list li.equip-hidden {
+  opacity: 0.5;
+  border-style: dashed;
+}
+.equip-check {
+  align-items: flex-start;
+  min-height: 44px;
+}
+.equip-check input {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+.equip-qty {
+  font-weight: 700;
+}
+.equip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

@@ -2,6 +2,8 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { BottomDock, type Tab } from './components/BottomDock.tsx'
 import { ChartPage } from './components/ChartPage.tsx'
 import { DocsPage } from './components/DocsPage.tsx'
+import { EquipmentPage } from './components/EquipmentPage.tsx'
+import { checkedToday, checklistItems } from './equipment.ts'
 import { Header } from './components/Header.tsx'
 import { LogPage } from './components/LogPage.tsx'
 import { RenewalNotice } from './components/RenewalNotice.tsx'
@@ -33,7 +35,7 @@ import { applyTheme, loadTheme, saveTheme, THEME_STORAGE_KEY, type ThemePreferen
 import type { TrackPoint } from './types.ts'
 import { assessTrend } from './warning.ts'
 
-type View = Tab | 'log'
+type View = Tab | 'log' | 'equip'
 
 export default function App() {
   const { t, lang, setLang } = useI18n()
@@ -177,6 +179,12 @@ export default function App() {
     (port !== null && portTide.seaLevel.length > 0 && tideAlert(tideCrossing(portLevels(port, portTide.seaLevel), port.dangerLevel, now), now)) ||
     (here !== null && sunsetAlert(sunTimes(noon.getTime(), here.lat, here.lon).sunset, now, profile.boat.daylightOnly, log.activeTrack !== null))
 
+  // 法定備品のチェックの進み具合（今日チェックした数 / 項目の数）
+  const equipItems = checklistItems(profile.equipment, profile.boat.type, profile.boat.daylightOnly, lang).filter((i) => !profile.equipment.hidden.includes(i.id))
+  const equipChecked = checkedToday(profile.equipment, now)
+  const equipTotal = equipItems.length
+  const equipDone = equipItems.filter((i) => equipChecked.includes(i.id)).length
+
   // 免許の更新・次回の船舶検査（1か月前から知らせる）
   const renewals = useMemo(() => upcomingRenewals(profile, Date.now()), [profile])
 
@@ -215,8 +223,13 @@ export default function App() {
           <button className="secondary log-open" onClick={() => go('log')}>
             📒 {t('log.open', { tracks: log.tracks.length, marks: log.marks.length })}
           </button>
+          <button className="secondary log-open" onClick={() => go('equip')}>
+            ✅ {t('equip.open', { done: equipDone, total: equipTotal })}
+          </button>
         </>
       )}
+
+      {view === 'equip' && <EquipmentPage profile={profile} onChange={updateProfile} onBack={() => go('chart')} />}
 
       {view === 'log' && (
         <LogPage
@@ -283,7 +296,7 @@ export default function App() {
         />
       )}
 
-      <BottomDock tab={view === 'log' ? 'chart' : view} onTab={go} recording={log.activeTrack !== null} alert={alert} tideAlert={tideWarn} docsAlert={renewals.length > 0} />
+      <BottomDock tab={view === 'log' || view === 'equip' ? 'chart' : view} onTab={go} recording={log.activeTrack !== null} alert={alert} tideAlert={tideWarn} docsAlert={renewals.length > 0} />
     </div>
   )
 }
