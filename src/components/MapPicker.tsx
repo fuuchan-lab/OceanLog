@@ -36,7 +36,8 @@ export function MapPicker({ value, here, onChange }: Props) {
   useEffect(() => {
     if (!el.current || map.current) return
     const start = value ?? here ?? JAPAN
-    const m = L.map(el.current, { zoomControl: true }).setView([start.lat, start.lon], value || here ? 15 : 8)
+    // 地図を回すプラグイン（leaflet-rotate）のボタンは、この地図では使わない
+    const m = L.map(el.current, { zoomControl: true, rotateControl: false, touchRotate: false } as L.MapOptions).setView([start.lat, start.lon], value || here ? 15 : 8)
     L.tileLayer(BASE_LAYERS['gsi-photo'].url, { attribution: BASE_LAYERS['gsi-photo'].attribution, maxZoom: 18 }).addTo(m)
     L.tileLayer(SEAMARKS.url, { attribution: SEAMARKS.attribution, maxZoom: 18 }).addTo(m)
     const report = () => {

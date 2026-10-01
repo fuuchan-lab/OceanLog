@@ -12,6 +12,7 @@ import type { ThemePreference } from '../theme.ts'
 import { syncText } from './Header.tsx'
 import { DriveProgress, driveSettled, SyncNowButton } from './SyncFeedback.tsx'
 import { MapPicker } from './MapPicker.tsx'
+import { SliderField } from './SliderField.tsx'
 import { MsilSettingsCard } from './MsilSettingsCard.tsx'
 import type { MsilSettings } from '../msil.ts'
 
@@ -36,13 +37,12 @@ function PortForm({ initial, here, onSave, onDelete, onClose }: { initial: HomeP
   const [name, setName] = useState(initial.name)
   const [lat, setLat] = useState(initial.lat ? initial.lat.toFixed(5) : '')
   const [lon, setLon] = useState(initial.lon ? initial.lon.toFixed(5) : '')
-  const [z0, setZ0] = useState(String(Math.round(initial.z0 * 100)))
-  const [danger, setDanger] = useState(String(Math.round(initial.dangerLevel * 100)))
+  // どちらも cm（潮位表の基準）。スライダーで選ぶ
+  const [z0, setZ0] = useState(Math.round(initial.z0 * 100))
+  const [danger, setDanger] = useState(Math.round(initial.dangerLevel * 100))
   const latV = parseCoord(lat, true)
   const lonV = parseCoord(lon, false)
-  const z0V = Number(z0)
-  const dangerV = Number(danger)
-  const valid = name.trim() !== '' && latV !== null && lonV !== null && Number.isFinite(z0V) && Number.isFinite(dangerV)
+  const valid = name.trim() !== '' && latV !== null && lonV !== null
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -55,7 +55,7 @@ function PortForm({ initial, here, onSave, onDelete, onClose }: { initial: HomeP
         onSubmit={(e) => {
           e.preventDefault()
           if (!valid) return
-          onSave({ ...initial, name: name.trim(), lat: latV, lon: lonV, z0: z0V / 100, dangerLevel: dangerV / 100 })
+          onSave({ ...initial, name: name.trim(), lat: latV, lon: lonV, z0: z0 / 100, dangerLevel: danger / 100 })
         }}
       >
         <div className="row">
@@ -91,18 +91,18 @@ function PortForm({ initial, here, onSave, onDelete, onClose }: { initial: HomeP
           </div>
           {latV !== null && lonV !== null && <p className="muted small">{formatPosition({ lat: latV, lon: lonV })}</p>}
         </details>
-        <div className="grid2">
-          <label>
-            {t('port.danger')}
-            <input value={danger} onChange={(e) => setDanger(e.target.value)} inputMode="numeric" />
-          </label>
-          <label>
-            {t('port.z0')}
-            <input value={z0} onChange={(e) => setZ0(e.target.value)} inputMode="numeric" />
-          </label>
-        </div>
-        <p className="muted small">{t('port.dangerHint')}</p>
-        <p className="muted small">{t('port.z0Hint')}</p>
+        <SliderField
+          label={t('port.danger')}
+          value={danger}
+          onChange={setDanger}
+          min={-50}
+          max={300}
+          step={5}
+          unit="cm"
+          note={z0 > 0 ? t('port.dangerVsMsl', { v: danger - z0 }) : undefined}
+          hint={t('port.dangerHint')}
+        />
+        <SliderField label={t('port.z0')} value={z0} onChange={setZ0} min={0} max={300} step={5} unit="cm" hint={t('port.z0Hint')} />
         <button type="submit" className="primary" disabled={!valid}>
           {t('common.save')}
         </button>
@@ -399,17 +399,20 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
         />
       )}
       {/* 保存の状態（画面の下に固定） */}
-      <div className={`save-bar${savedAt ? ' save-bar-done' : ''}`} role="status" aria-live="polite">
-        <span className="small">
-          {savedAt ? (
-            <>
-              ✅ {t('settings.saved')} <DriveProgress sync={sync} signedIn={auth.account !== null} savedAt={savedAt} />
-            </>
-          ) : (
-            `✓ ${t('settings.autoSave')}`
-          )}
-        </span>
-      </div>
+      {/* 出航地の編集中は、編集画面の「保存」を使うので隠す */}
+      {!editing && (
+        <div className={`save-bar${savedAt ? ' save-bar-done' : ''}`} role="status" aria-live="polite">
+          <span className="small">
+            {savedAt ? (
+              <>
+                ✅ {t('settings.saved')} <DriveProgress sync={sync} signedIn={auth.account !== null} savedAt={savedAt} />
+              </>
+            ) : (
+              `✓ ${t('settings.autoSave')}`
+            )}
+          </span>
+        </div>
+      )}
     </>
   )
 }

@@ -452,8 +452,9 @@ export const ja = {
   'picker.searchFailed': '探せませんでした。通信状況を確認してください。',
   'picker.noResults': '見つかりませんでした。別の言葉でお試しください。',
   'picker.hint': '地図を指で動かして、中央の＋を桟橋・スロープに合わせてください（航空写真）。',
-  'port.danger': '干潮危険潮位 (cm)',
-  'port.z0': '平均水面の高さ Z0 (cm)',
+  'port.danger': '干潮危険潮位',
+  'port.dangerVsMsl': '平均水面から {v} cm',
+  'port.z0': '平均水面の高さ Z0',
   'port.dangerHint':
     '干潮危険潮位: これより潮位が低いと、桟橋・スロープが使いにくくなる高さ。潮汐表（基本水準面を 0 とした潮位）の値で入れます。',
   'port.z0Hint':
@@ -981,8 +982,9 @@ export const en: Record<MessageKey, string> = {
   'picker.searchFailed': "Couldn't search. Check your connection.",
   'picker.noResults': 'No results. Try different words.',
   'picker.hint': 'Drag the map so the + in the center is on your pier or slipway (aerial photo).',
-  'port.danger': 'Low-tide danger level (cm)',
-  'port.z0': 'Mean sea level Z0 (cm)',
+  'port.danger': 'Low-tide danger level',
+  'port.dangerVsMsl': '{v} cm from mean sea level',
+  'port.z0': 'Mean sea level Z0',
   'port.dangerHint':
     'Low-tide danger level: below this tide height the pier or slipway is hard to use. Enter it as in your tide table (relative to chart datum).',
   'port.z0Hint':

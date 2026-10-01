@@ -2968,3 +2968,53 @@ button.sync-now.is-failed {
   fill: var(--now);
   font-weight: 800;
 }
+
+/* スライダーで数値を選ぶ欄（出航地の危険潮位・平均水面の高さ） */
+.slider-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+}
+.slider-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 700;
+}
+.slider-value {
+  font-size: 1.6rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.slider-row input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  accent-color: var(--accent);
+}
+button.slider-step {
+  flex: none;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+.slider-scale {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 52px;
+}
+.slider-note {
+  margin: 0;
+  font-weight: 700;
+}
