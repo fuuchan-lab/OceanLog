@@ -258,23 +258,6 @@ button.link:disabled {
   color: var(--muted);
 }
 
-.history {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.history li {
-  padding: 8px 0;
-  border-top: 1px solid var(--border);
-}
-
-.history li:first-child {
-  border-top: 0;
-}
-
 .thumb {
   width: 96px;
   height: 96px;
@@ -284,12 +267,6 @@ button.link:disabled {
 }
 
 /* 履歴の編集 */
-.editor {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-top: 4px;
-}
 
 .field {
   display: flex;
@@ -304,11 +281,6 @@ button.link:disabled {
 }
 
 /* 入力欄の並び */
-.two {
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
-}
 
 .grow {
   flex: 1;
@@ -319,23 +291,7 @@ select {
   appearance: auto;
 }
 
-.med-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
 /* 一覧の右側（並べ替え・編集・削除）。狭い画面でも押しやすい大きさを保つ */
-.med-actions {
-  display: inline-flex;
-  align-items: center;
-  flex: none;
-}
-
-button.link.move-button {
-  padding: 4px 6px;
-  min-width: 36px;
-}
 
 /* ヘッダー（アプリ名・設定・Googleログイン） */
 .topbar {
@@ -352,15 +308,6 @@ button.link.move-button {
 }
 
 /* 設定の画面は右側のボタンが3つ（ヘルプ・戻る・ログイン）並ぶ。狭い画面ではアプリ名の下の段に回し、名前が切れないようにする */
-@media (max-width: 440px) {
-  .topbar-settings {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .topbar-settings .topbar-actions {
-    justify-content: flex-end;
-  }
-}
 
 .topbar-actions {
   display: flex;
@@ -374,21 +321,6 @@ button.link.move-button {
   font-size: 11px;
   letter-spacing: 0.08em;
   color: var(--muted);
-}
-
-.icon-button {
-  width: 44px;
-  height: 44px;
-  border: 0;
-  background: transparent;
-  color: var(--text);
-  font-size: 1.4rem;
-  line-height: 1;
-}
-
-.icon-button:hover,
-.icon-button:focus-visible {
-  color: var(--accent);
 }
 
 .google-button {
@@ -520,35 +452,6 @@ button.danger-btn {
 }
 
 /* 付箋メモ */
-textarea.sticky {
-  width: 100%;
-  min-height: 72px;
-  resize: vertical;
-  font: inherit;
-  font-size: 16px;
-  line-height: 1.5;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 4px 4px 16px 4px;
-  background: #fef08a;
-  color: #422006;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-textarea.sticky::placeholder {
-  color: #a16207;
-}
-
-.sticky-note {
-  margin: 4px 0 0;
-  padding: 10px 12px;
-  border-radius: 4px 4px 16px 4px;
-  background: #fef08a;
-  color: #422006;
-  font-size: 0.9rem;
-  white-space: pre-wrap;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
 
 /* 設定画面から戻るボタン */
 .back-button {
@@ -568,24 +471,6 @@ textarea.sticky::placeholder {
   color: var(--accent-text);
 }
 
-.chart-loading {
-  /* グラフの読み込み中に、下の画面が動かないよう場所を確保する */
-  min-height: 320px;
-}
-
-.privacy-link {
-  text-align: center;
-  font-size: 0.85rem;
-}
-
-.privacy-link a {
-  color: var(--muted);
-}
-
-.theme-row {
-  margin-top: 12px;
-}
-
 /* 言語の選択（設定画面） */
 .language-select {
   width: auto;
@@ -600,12 +485,6 @@ textarea.sticky::placeholder {
 }
 
 /* 記録の詳細ポップアップの写真 */
-.popup-photo {
-  width: 100%;
-  max-height: 60vh;
-  object-fit: contain;
-  border-radius: 10px;
-}
 
 /* 歯車アイコンの立体感（影）と、押した時の回転 */
 .gear {
@@ -613,11 +492,6 @@ textarea.sticky::placeholder {
   margin: 0 auto;
   filter: drop-shadow(0 2px 1.5px rgba(0, 0, 0, 0.4));
   transition: transform 0.4s ease;
-}
-
-.icon-button:hover .gear,
-.icon-button:focus-visible .gear {
-  transform: rotate(45deg);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -651,24 +525,6 @@ textarea.sticky::placeholder {
 }
 
 /* 色の選択。4つ×2段の小さめの丸 */
-.swatches {
-  display: grid;
-  grid-template-columns: repeat(4, 26px);
-  gap: 8px;
-}
-
-.swatch-btn {
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: 2px solid var(--card);
-  border-radius: 50%;
-  box-shadow: 0 0 0 1px var(--border);
-}
-
-.swatch-btn[aria-checked='true'] {
-  box-shadow: 0 0 0 2px var(--text);
-}
 
 /* 情報のお知らせ（オフラインなど） */
 .banner-info {
@@ -689,23 +545,8 @@ textarea.sticky::placeholder {
 }
 
 /* 読み取りカードの見出しは、他のカードより大きく */
-.form-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  line-height: 1.3;
-}
 
 /* 名前の入力欄 */
-.name-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.name-row input {
-  flex: 1;
-  min-width: 0;
-}
 
 /* ---- リードログで追加 ---- */
 
@@ -754,12 +595,7 @@ textarea.sticky::placeholder {
 }
 
 /* 重要度・顧客の種類のボタン */
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
-}
+
 .chip {
   display: inline-flex;
   align-items: center;
@@ -776,18 +612,7 @@ textarea.sticky::placeholder {
   color: #fff;
   font-weight: 700;
 }
-.chip.on-neutral {
-  background: var(--text);
-  border-color: var(--text);
-  color: var(--card);
-}
-.chip-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex: none;
-}
+
 .tag {
   display: inline-block;
   padding: 1px 8px;
@@ -799,85 +624,11 @@ textarea.sticky::placeholder {
   margin-right: 6px;
   white-space: nowrap;
 }
-.tag-warn {
-  background: var(--caution-bg);
-  color: var(--caution-text);
-}
-.tag-muted {
-  background: var(--border);
-  color: var(--muted);
-}
 
 /* ダッシュボード */
-.kpis {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin: 8px 0 4px;
-}
-.kpi {
-  display: flex;
-  flex-direction: column;
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: var(--info-bg);
-  color: var(--info-text);
-}
-.kpi-today {
-  background: var(--ok-bg);
-  color: var(--ok-text);
-}
-.kpi-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-.kpi .big {
-  margin: 0;
-  line-height: 1.1;
-}
-.chart-title {
-  margin: 14px 0 0;
-  font-size: 0.95rem;
-}
-.lead-chart {
-  margin: 4px -6px 0;
-}
-.breakdown {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 6px;
-  margin-top: 8px;
-}
-.breakdown-title {
-  margin: 0;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--muted);
-}
-.stat-chips {
-  list-style: none;
-  padding: 0;
-  margin: 2px 0 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  font-size: 0.9rem;
-}
-.stat-chips li {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
 
 /* 読み取り */
-.capture-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.capture-buttons button {
-  flex: 1 1 auto;
-}
+
 .progress progress {
   width: 100%;
 }
@@ -914,63 +665,9 @@ textarea.sticky::placeholder {
   stroke: #fbbf24;
   cursor: grab;
 }
-.scan-result {
-  width: 100%;
-  max-height: 240px;
-  object-fit: contain;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
-}
-.ocr-text summary {
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-.ocr-text pre {
-  white-space: pre-wrap;
-  font-size: 0.8rem;
-  background: var(--bg);
-  padding: 8px;
-  border-radius: 8px;
-  margin: 4px 0 0;
-}
 
 /* 入力欄 */
-.lead-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 10px;
-}
-.form-grid .field,
-.form-grid input,
-.form-grid select {
-  min-width: 0;
-}
-.form-grid .field-wide {
-  grid-column: 1 / -1;
-}
-.met-at-fields {
-  display: flex;
-  gap: 8px;
-}
-.met-at-fields input {
-  flex: 1 1 0;
-  min-width: 0;
-}
-.met-at-fields input[type='time'] {
-  flex: 0 1 130px;
-}
-@media (max-width: 379px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-}
+
 input[type='text'],
 input[type='email'],
 input[type='tel'],
@@ -992,52 +689,12 @@ input[type='time'] {
   gap: 6px;
   font-weight: normal;
 }
-.member-card {
-  border: 2px solid var(--accent);
-}
 
 /* 一覧 */
 .search {
   margin: 4px 0 8px;
 }
-.filter-chips {
-  margin-bottom: 4px;
-}
-.lead-item {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
-.lead-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  text-align: left;
-  background: none;
-  border: none;
-  padding: 0;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-.lead-name {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 2px;
-}
-.lead-tags:empty {
-  display: none;
-}
-.photo-button {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  flex: none;
-}
+
 .detail {
   display: grid;
   grid-template-columns: 1fr;
@@ -1061,13 +718,6 @@ input[type='time'] {
 
 /* ---- 画面の大きさ別のレイアウト ----
    下のナビゲーションで画面を切り替えるので、どの大きさでも1列（PC などの広い画面は少し広げる） */
-.tab-panel,
-.settings-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-width: 0;
-}
 
 @media (min-width: 1024px) {
   :root {
@@ -1086,61 +736,22 @@ input[type='time'] {
   .scan-card.modal-card {
     max-width: 920px;
   }
-  .form-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .breakdown {
-    grid-template-columns: 1fr 1fr;
-  }
+  
+  
   /* PC ではカメラが無いことが多いので、「画像を選ぶ」を主にしても押しやすいよう横並びのまま */
-  .capture-buttons button {
-    flex: 1 1 0;
-  }
+  
 }
 
 /* スマホの横向き（高さが低い）: グラフを低くして、入力欄が隠れないようにする */
 @media (max-height: 500px) and (orientation: landscape) {
-  .lead-chart .recharts-responsive-container {
-    height: 160px !important;
-  }
+  
   .scan-image {
     max-height: 55vh;
   }
 }
 
 /* 入力欄の区切り（紙の Fair Meeting Note と同じ区切り） */
-.form-section {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 8px 12px 12px;
-  margin: 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.form-section legend {
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: #1f4e79;
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-.next-steps {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.next-steps li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 10px;
-}
+
 .check {
   display: inline-flex;
   align-items: center;
@@ -1152,19 +763,7 @@ input[type='time'] {
   width: 20px;
   height: 20px;
 }
-.next-step-fields {
-  display: flex;
-  gap: 6px;
-  flex: 1 1 220px;
-}
-.next-step-fields input[type='text'] {
-  flex: 1 1 90px;
-  min-width: 0;
-}
-.next-step-fields input[type='date'] {
-  flex: 0 1 150px;
-  min-width: 0;
-}
+
 input[type='datetime-local'] {
   font: inherit;
   font-size: 16px;
@@ -1175,12 +774,6 @@ input[type='datetime-local'] {
   color: var(--text);
   width: 100%;
 }
-.tag-outline {
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border);
-  font-weight: 600;
-}
 
 /* アプリ名が画面の幅に対して長い場合に備えて、見出しを少し小さくして設定・ログインのボタンと重ならないようにする */
 .brand-text h1 {
@@ -1190,14 +783,6 @@ input[type='datetime-local'] {
 }
 
 /* 「再撮影」ボタン（写真のすぐ下） */
-.retake-button {
-  width: 100%;
-  margin-top: 8px;
-}
-.scan-result-block {
-  display: flex;
-  flex-direction: column;
-}
 
 /* ---- 展示会の設定 ---- */
 .seg-tabs {
@@ -1227,193 +812,14 @@ input[type='datetime-local'] {
 .seg-tabs button:disabled {
   opacity: 0.45;
 }
-.exhibition-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.exhibition-item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  text-align: left;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--text);
-  font: inherit;
-}
+
 /* 「選択した展示会を開く」で開く対象として選んでいる行（青・太い線） */
-.exhibition-item.picked {
-  border: 2px solid var(--accent);
-  background: var(--info-bg);
-}
-.exhibition-count {
-  flex: none;
-  font-weight: 700;
-  color: var(--accent);
-}
-.scope-chips {
-  margin: 2px 0 6px;
-}
 
 /* 開催日（1行＋カレンダー） */
-.range-display {
-  width: 100%;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card);
-  color: var(--text);
-  font: inherit;
-  font-size: 1rem;
-  text-align: left;
-}
-.calendar {
-  margin-top: 6px;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
-}
-.calendar-head button {
-  font-size: 1.4rem;
-  min-width: 44px;
-  min-height: 36px;
-}
-.calendar-hint {
-  margin: 2px 0 6px;
-  text-align: center;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--accent);
-}
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-}
-.calendar-weekday {
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--muted);
-  padding: 2px 0;
-}
-.calendar-weekday.weekend {
-  color: var(--danger);
-}
-.calendar-day {
-  min-height: 40px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 0.95rem;
-}
-.calendar-day.today {
-  outline: 1px dashed var(--accent);
-  outline-offset: -3px;
-}
-.calendar-day.in-range {
-  background: var(--info-bg);
-  color: var(--info-text);
-  border-radius: 0;
-}
-.calendar-day.edge {
-  background: var(--accent);
-  color: var(--accent-text);
-  font-weight: 700;
-  border-radius: 8px;
-}
 
 /* 開場時間（1行の時刻バー） */
-.hour-summary {
-  margin-bottom: 4px;
-  font-size: 1rem;
-}
-.hour-row {
-  display: flex;
-  gap: 2px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scroll-snap-type: x proximity;
-  -webkit-overflow-scrolling: touch;
-}
-.hour-cell {
-  flex: 0 0 38px;
-  min-height: 40px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--card);
-  color: var(--text);
-  font: inherit;
-  font-size: 0.9rem;
-  scroll-snap-align: start;
-}
-.hour-cell.in-range {
-  background: var(--info-bg);
-  color: var(--info-text);
-  border-color: transparent;
-}
-.hour-cell.edge {
-  background: var(--accent);
-  color: var(--accent-text);
-  font-weight: 700;
-}
 
 /* 展示会ロゴ */
-.logo-field {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.logo-preview,
-.logo-empty {
-  height: 56px;
-  max-width: 200px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: #fff;
-  object-fit: contain;
-}
-.logo-empty {
-  width: 120px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg);
-}
-.logo-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.dash-head {
-  align-items: flex-start;
-  gap: 10px;
-}
-.dash-logo {
-  flex: none;
-  height: 44px;
-  max-width: 132px;
-  object-fit: contain;
-  background: #fff;
-  border-radius: 8px;
-  padding: 3px 6px;
-}
 
 /* 撮影後の範囲合わせ: 見出しと説明はつめ、写真の下に「再撮影」「この範囲で読み取る」を横並び */
 .scan-head p {
@@ -1439,19 +845,7 @@ input[type='datetime-local'] {
 }
 
 /* ヘルプ */
-.help-button {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: var(--accent);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--accent);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-}
+
 .help-card {
   display: flex;
   align-items: center;
@@ -1474,18 +868,6 @@ input[type='datetime-local'] {
 }
 
 /* 「変更を保存しますか？」 */
-.confirm-card {
-  max-width: 360px;
-}
-.confirm-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.confirm-actions button {
-  min-height: 46px;
-  font-weight: 700;
-}
 
 /* パソコンのカメラ */
 .camera-card.modal-card {
@@ -1529,104 +911,14 @@ input[type='datetime-local'] {
 }
 
 /* 一覧の下の、まとめての操作 */
-.bulk-move {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 8px;
-}
-.bulk-move select {
-  flex: 1 1 180px;
-  min-width: 0;
-}
-.bulk-delete {
-  width: 100%;
-  margin-top: 12px;
-}
-.exhibition-list li {
-  display: flex;
-  gap: 6px;
-  align-items: stretch;
-}
-.exhibition-list li .exhibition-item {
-  flex: 1;
-  min-width: 0;
-}
-.icon-delete {
-  flex: none;
-  width: 44px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  font-size: 1.1rem;
-}
 
 /* 担当者の入力欄: 入力と、登録者一覧から選ぶ ▼ を横に並べる */
-.member-field {
-  display: flex;
-  gap: 6px;
-  flex: 1 1 90px;
-  min-width: 0;
-}
-.member-field input[type='text'] {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.member-picker {
-  flex: 0 0 auto;
-  width: 3.4em;
-  padding-left: 8px;
-  padding-right: 4px;
-}
-.form-grid .member-field {
-  flex: 1 1 100%;
-}
 
 /* 登録者管理: この端末の登録者の印と、初回の登録者の選択 */
-.category-embedded {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-}
-.category-embedded h3 {
-  margin: 0 0 4px;
-  font-size: 1rem;
-}
-.this-device {
-  color: var(--accent);
-  font-size: 0.8rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.member-choices {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 8px 0;
-}
-.member-choices button {
-  flex: 1 1 6em;
-  min-height: 44px;
-}
 
 /* 画面の下の広告（adsense.ts に AdSense の ID を入れた時だけ表示される） */
-.ad-banner {
-  margin-top: auto;
-  min-height: 50px;
-  max-height: 100px;
-  text-align: center;
-  overflow: hidden;
-}
-
-.ad-banner ins {
-  display: block;
-  max-height: 100px;
-}
 
 /* 下のナビゲーション（広告 + ボタン 5 つ）。広告は、表示される時だけ場所を取る */
-.tab-hidden {
-  display: none !important;
-}
 
 .bottom-dock {
   --dock-bg: var(--card);
@@ -1643,20 +935,7 @@ input[type='datetime-local'] {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-.bottom-dock .ad-banner {
-  margin: 0;
-  min-height: 0;
-  border-bottom: 1px solid var(--border);
-}
-
 /* 広告が出ていない（未配信・読み込み前）時は、線も出さない */
-.bottom-dock .ad-banner:not(:has(ins[data-ad-status='filled'])) {
-  border-bottom: 0;
-}
-
-.ad-banner ins[data-ad-status='unfilled'] {
-  display: none !important;
-}
 
 .bottom-nav {
   display: grid;
@@ -1695,11 +974,6 @@ input[type='datetime-local'] {
 
 .nav-icon .cut {
   fill: var(--dock-bg);
-}
-
-.nav-icon .cutline {
-  fill: none;
-  stroke: var(--dock-bg);
 }
 
 .nav-item.active {
@@ -1841,10 +1115,6 @@ select.compact {
 .nav-dot-rec {
   background: #dc2626;
   animation: spark-blink 1.6s ease-in-out infinite;
-}
-
-.nav-dot-alert {
-  background: #f59e0b;
 }
 
 /* 数値のならび */
@@ -2594,13 +1864,6 @@ progress {
   opacity: 0.85;
 }
 
-.spark-now-line {
-  stroke: var(--muted);
-  stroke-width: 1;
-  stroke-dasharray: 2 2;
-  opacity: 0.6;
-}
-
 .spark-dot {
   fill: var(--card);
   stroke: var(--accent);
@@ -2619,15 +1882,6 @@ progress {
 }
 
 /* 推移グラフの数値（2時間ごと）。線と重なっても読めるよう、背景色の縁取りを付ける */
-.spark-value {
-  fill: var(--text);
-  font-size: 9.5px;
-  font-weight: 600;
-  paint-order: stroke;
-  stroke: var(--card);
-  stroke-width: 3px;
-  stroke-linejoin: round;
-}
 
 /* タイトルの左のアプリアイコン。文字と同じくらいの大きさ */
 .brand {
@@ -2682,104 +1936,12 @@ progress {
 }
 
 /* 薬の色の選択。4つ×2段の小さめの丸 */
-.swatches {
-  display: grid;
-  grid-template-columns: repeat(4, 26px);
-  gap: 8px;
-}
-
-.swatch-btn {
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: 2px solid var(--card);
-  border-radius: 50%;
-  box-shadow: 0 0 0 1px var(--border);
-}
-
-.swatch-btn[aria-checked='true'] {
-  box-shadow: 0 0 0 2px var(--text);
-}
 
 /* 薬の名前の下の行: 左に服薬間隔、右に色の選択。狭い画面では色が下に回り込む */
-.interval-color {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px 20px;
-}
-
-.interval-color > .field:first-child {
-  flex: 1 1 11em;
-}
 
 /* データのエクスポート: ドライブに保存・端末にダウンロードのボタンを並べる */
-.export-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.export-buttons button {
-  flex: 1 1 auto;
-}
 
 /* 記録する日時（「記録する」ボタンの上）。透明な日時入力を上に重ね、タップで日時の選択画面を開く */
-.when-field {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.when-field p {
-  margin: 0;
-}
-
-.when-box {
-  position: relative;
-  width: 100%;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--card);
-}
-
-.when-box.custom {
-  border-color: var(--accent);
-}
-
-.when-label {
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.when-time {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.when-box .when-input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  padding: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.when-box:focus-within {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
 
 /* 気圧が上がりつつある時のお知らせ */
 .banner-info {
@@ -2794,162 +1956,28 @@ progress {
   overflow-y: auto;
 }
 
-.advice-section h3 {
-  margin: 4px 0 6px;
-  font-size: 1rem;
-}
-
-.advice-section p {
-  margin: 0 0 8px;
-  font-size: 0.9rem;
-}
-
-.advice-section ul {
-  margin: 0;
-  padding-left: 1.2em;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 0.9rem;
-}
-
 /* ポップアップの中の要素は、内容が長くなっても縮めない（縮むとタブなどが潰れて見えなくなる） */
 .modal-card > * {
   flex-shrink: 0;
 }
 
 /* 記録するカード（今の頭痛・服薬）の見出しは、他のカードより大きく */
-.form-title {
-  font-size: 1.3rem;
-  font-weight: 700;
-  line-height: 1.3;
-}
 
 /* 気圧カードの下段: 左に「最後に薬を飲んでから」、右に気圧の変化のお知らせと「アドバイス」ボタン */
-.pressure-bottom {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: 10px;
-  align-items: stretch;
-}
-
-.pressure-bottom-single {
-  grid-template-columns: 1fr;
-}
-
-.med-status {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-  padding: 10px 9px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg);
-}
-
-.med-status-title {
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--muted);
-}
-
-.med-status-time {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.25;
-}
-
-.pressure-advice {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 8px;
-}
 
 /* 気圧の変化のお知らせは大きめに、「アドバイス」ボタンは小さめに */
-.pressure-advice .banner {
-  margin: 0;
-  padding: 10px 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  line-height: 1.4;
-  /* 「…ありま／す。」のように、最後の1文字だけ次の行に残らないよう、行を均等に折り返す */
-  text-wrap: balance;
-  /* 日本語は、語の途中ではなく文節の区切りで折り返す（対応していないブラウザでは無視される） */
-  word-break: auto-phrase;
-}
-
-.pressure-advice .secondary {
-  min-height: 36px;
-  padding: 6px 10px;
-  font-size: 0.85rem;
-  border-radius: 8px;
-}
 
 /* 幅がとても狭いスマホでは、左右に並べず上下に並べる */
-@media (max-width: 389px) {
-  .pressure-bottom {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* 薬名などは、途中で折り返さず、1語のまま次の行へ送る */
-.nowrap {
-  white-space: nowrap;
-}
 
 /* 服薬の記録がない時のメッセージ */
-.med-status-empty {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.5;
-}
 
 /* 服薬間隔の入力（数字と単位を1行に） */
-.interval-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.interval-row input {
-  width: 7em;
-}
 
 /* 薬の名前の左のカプセルアイコン（選んだ色がすぐ反映される） */
-.name-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.name-row input {
-  flex: 1;
-  min-width: 0;
-}
 
 /* 「最後に服薬してから」: 薬名と錠数は白の太字、次の服薬までの時間は控えめに */
-.med-status-drug {
-  color: var(--text);
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-.med-status-next {
-  margin: 2px 0 0;
-  font-size: 0.75rem;
-  line-height: 1.4;
-  /* 「次の服薬が可能になるまで／あと」は、「最後に服薬してから」と同じ文字色。時間だけ太字で目立たせる */
-  color: var(--muted);
-}
-
-.med-status-next strong {
-  color: var(--text);
-}
 
 /* 気圧の推移グラフの「今」の丸は、ゆっくり点滅させて、いまの位置が分かるようにする */
 @keyframes spark-blink {
@@ -3235,8 +2263,7 @@ button.link {
   font-weight: 600;
 }
 
-.tide-label,
-.spark-value {
+.tide-label {
   font-size: 11.5px;
   font-weight: 800;
 }
@@ -3675,29 +2702,8 @@ button.link {
 }
 
 /* 風の予報: 数値の前に「平均」「瞬間」の小さな見出し */
-.hour-wind {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1.15;
-}
-.hour-tag {
-  font-size: 0.65rem;
-  color: var(--muted);
-  white-space: nowrap;
-}
 
 /* 1枚のカードの中の小見出し（風と波など） */
-.sub-title {
-  margin: 6px 0 0;
-  padding-top: 8px;
-  border-top: 2px solid var(--border);
-  font-size: 1.05rem;
-}
-.card > h2 + .sub-title {
-  border-top: 0;
-  padding-top: 0;
-}
 
 /* 風・波の予報の表: 2時間前は薄く、今は太い枠 */
 .hour.hour-past,

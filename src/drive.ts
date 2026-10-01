@@ -315,11 +315,6 @@ export async function deleteFile(fileId: string) {
   await driveFetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, { method: 'DELETE' })
 }
 
-/** アクセストークンを持っているか（ログイン中で、ドライブに問い合わせられる状態か） */
-export function hasAccessToken(): boolean {
-  return accessToken !== null
-}
-
 export async function downloadBlob(fileId: string): Promise<Blob> {
   return (await driveFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`)).blob()
 }

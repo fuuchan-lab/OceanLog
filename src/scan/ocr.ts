@@ -20,7 +20,6 @@ type Listener = (p: OcrProgress) => void
 
 let workerPromise: Promise<Worker> | null = null
 let listener: Listener | null = null
-let ready = false
 
 function getWorker(): Promise<Worker> {
   workerPromise ??= (async () => {
@@ -34,25 +33,12 @@ function getWorker(): Promise<Worker> {
     })
     // 表の形の書類（免許証・検査手帳）は、自動のページ分割（PSM 3）で読む
     await worker.setParameters({ tessedit_pageseg_mode: PSM.AUTO })
-    ready = true
     return worker
   })().catch((e: unknown) => {
     workerPromise = null // 通信の失敗などの後に、もう一度試せるようにする
     throw e
   })
   return workerPromise
-}
-
-export const isOcrReady = () => ready
-
-/** 読み取り用のデータを先にダウンロードしておく */
-export async function prepareOcr(onProgress?: Listener): Promise<void> {
-  listener = onProgress ?? null
-  try {
-    await getWorker()
-  } finally {
-    listener = null
-  }
 }
 
 export interface OcrResult {

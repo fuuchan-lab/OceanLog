@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 /** iPhone の Safari が出す、方位の独自の値 */
 interface IosOrientationEvent extends DeviceOrientationEvent {
@@ -26,6 +26,10 @@ function smooth(prev: number | null, next: number): number {
   return (prev + diff * 0.25 + 360) % 360
 }
 
+/** 画面に出す値を変える、最小の角度の差と間隔（センサーは1秒に数十回届くので、毎回は描き直さない） */
+const PUBLISH_MIN_DEG = 1
+const PUBLISH_MIN_MS = 100
+
 /**
  * スマホのコンパス（電子コンパス）で、端末の上端が向いている方角（磁方位、北=0 時計回り）。
  * iPhone は、画面をタップして許可してもらう必要がある（enable を呼ぶ）
@@ -35,14 +39,27 @@ export function useCompass() {
   const [needsPermission, setNeedsPermission] = useState(() => permissionFn() !== null)
   const [supported, setSupported] = useState(() => typeof window !== 'undefined' && 'DeviceOrientationEvent' in window)
 
+  // ならした値はいつも更新し、画面（state）には 1° 以上変わった時だけ、0.1秒に1回まで出す
+  const smoothed = useRef<number | null>(null)
+  const published = useRef<{ at: number; value: number | null }>({ at: 0, value: null })
   const listen = useCallback(() => {
+    const push = (raw: number) => {
+      const value = smooth(smoothed.current, raw)
+      smoothed.current = value
+      const now = performance.now()
+      const prev = published.current
+      const diff = prev.value === null ? 360 : Math.abs(((value - prev.value + 540) % 360) - 180)
+      if (diff < PUBLISH_MIN_DEG || now - prev.at < PUBLISH_MIN_MS) return
+      published.current = { at: now, value }
+      setHeading(value)
+    }
     const onIos = (e: Event) => {
       const h = (e as IosOrientationEvent).webkitCompassHeading
-      if (typeof h === 'number' && Number.isFinite(h)) setHeading((p) => smooth(p, (h + screenAngle()) % 360))
+      if (typeof h === 'number' && Number.isFinite(h)) push((h + screenAngle()) % 360)
     }
     const onAbsolute = (e: DeviceOrientationEvent) => {
       if (e.alpha === null) return
-      setHeading((p) => smooth(p, (360 - e.alpha! + screenAngle()) % 360))
+      push((360 - e.alpha + screenAngle()) % 360)
     }
     const hasAbsolute = 'ondeviceorientationabsolute' in window
     if (hasAbsolute) window.addEventListener('deviceorientationabsolute', onAbsolute as EventListener)

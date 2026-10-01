@@ -1,18 +1,9 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useRef, useState } from 'react'
 import { BottomDock, type Tab } from './components/BottomDock.tsx'
 import { ChartPage } from './components/ChartPage.tsx'
-import { DocsPage } from './components/DocsPage.tsx'
-import { EquipmentPage } from './components/EquipmentPage.tsx'
 import { checkedToday, checklistItems } from './equipment.ts'
 import { Header } from './components/Header.tsx'
-import { LogPage } from './components/LogPage.tsx'
 import { RenewalNotice } from './components/RenewalNotice.tsx'
-import { PositionCard } from './components/PositionCard.tsx'
-import { SafetyCard } from './components/SafetyCard.tsx'
-import { SettingsPage } from './components/SettingsPage.tsx'
-import { TidePage } from './components/TidePage.tsx'
-import { WaveCard } from './components/WaveCard.tsx'
-import { WeatherCard } from './components/WeatherCard.tsx'
 import type { LatLon } from './geo.ts'
 import { useConditions } from './hooks/useConditions.ts'
 import { useGeolocation } from './hooks/useGeolocation.ts'
@@ -33,6 +24,15 @@ import { loadPrefStamps, savePrefStamps, type PrefSection, type PrefStamps, type
 import { applyTheme, loadTheme, saveTheme, THEME_STORAGE_KEY, type ThemePreference } from './theme.ts'
 import type { TrackPoint } from './types.ts'
 import { assessTrend } from './warning.ts'
+
+// 最初に開く「航行」（海図）以外の画面は、開いた時に読み込む（最初の表示を速くする）。
+// オフライン用には、どれもあらかじめ端末に保存される（PWA のプリキャッシュ）
+const DocsPage = lazy(() => import('./components/DocsPage.tsx').then((m) => ({ default: m.DocsPage })))
+const EquipmentPage = lazy(() => import('./components/EquipmentPage.tsx').then((m) => ({ default: m.EquipmentPage })))
+const LogPage = lazy(() => import('./components/LogPage.tsx').then((m) => ({ default: m.LogPage })))
+const SettingsPage = lazy(() => import('./components/SettingsPage.tsx').then((m) => ({ default: m.SettingsPage })))
+const TidePage = lazy(() => import('./components/TidePage.tsx').then((m) => ({ default: m.TidePage })))
+const SeaPage = lazy(() => import('./components/SeaPage.tsx').then((m) => ({ default: m.SeaPage })))
 
 type View = Tab | 'log' | 'equip'
 
@@ -236,6 +236,8 @@ export default function App() {
         </>
       )}
 
+      {/* 開いた時に読み込む画面（読み込み中は、一瞬だけ「読み込み中…」） */}
+      <Suspense fallback={<p className="muted">{t('common.loading')}</p>}>
       {view === 'equip' && <EquipmentPage profile={profile} onChange={updateProfile} onBack={() => go('chart')} />}
 
       {view === 'log' && (
@@ -274,22 +276,21 @@ export default function App() {
       )}
 
       {view === 'sea' && (
-        <>
-          <SafetyCard
-            fix={fix}
-            conditions={data}
-            profile={profile}
-            warnings={warnings}
-            hazards={hazards}
-            underway={underway}
-            onSelectPort={(id) => updateProfile((p) => ({ ...p, activePortId: id }))}
-            onOpenSettings={() => go('settings')}
-          />
-          <WeatherCard state={conditions} onRefresh={() => void conditions.refresh()} unit={settings.windUnit} at={basis ?? data?.at ?? null} />
-          <WaveCard marine={data?.marine ?? null} dangerWave={profile.boat.dangerWave} />
-          <PositionCard geo={geo} />
-          <p className="muted small">{t('sea.sources')}</p>
-        </>
+        <SeaPage
+          safety={{
+            fix,
+            conditions: data,
+            profile,
+            warnings,
+            hazards,
+            underway,
+            onSelectPort: (id) => updateProfile((p) => ({ ...p, activePortId: id })),
+            onOpenSettings: () => go('settings'),
+          }}
+          weather={{ state: conditions, onRefresh: () => void conditions.refresh(), unit: settings.windUnit, at: basis ?? data?.at ?? null }}
+          wave={{ marine: data?.marine ?? null, dangerWave: profile.boat.dangerWave }}
+          position={{ geo }}
+        />
       )}
 
       {view === 'tide' && <TidePage at={basis ?? data?.at ?? null} conditions={data} profile={profile} underway={basisIsHere} />}
@@ -313,6 +314,8 @@ export default function App() {
           onTheme={chooseTheme}
         />
       )}
+
+      </Suspense>
 
       <BottomDock tab={view === 'log' || view === 'equip' ? 'chart' : view} onTab={go} recording={log.activeTrack !== null} alert={alert} tideAlert={tideWarn} docsAlert={renewals.length > 0} />
     </div>

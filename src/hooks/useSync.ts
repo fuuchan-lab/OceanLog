@@ -27,6 +27,7 @@ export function useSync(account: DriveAccount | null, profile: ProfileAccess, pr
   const onRemoteChangeRef = useRef(onRemoteChange)
   const profileRef = useRef(profile)
   const prefsRef = useRef(prefs)
+  const syncNowRef = useRef<() => Promise<void>>(async () => {})
   useEffect(() => {
     onRemoteChangeRef.current = onRemoteChange
     profileRef.current = profile
@@ -65,10 +66,15 @@ export function useSync(account: DriveAccount | null, profile: ProfileAccess, pr
       running.current = false
       if (again.current) {
         again.current = false
-        void syncNow()
+        // 同期中に頼まれた分を、続けてもう一度（自分自身を直接呼ばず、ref から呼ぶ）
+        void syncNowRef.current()
       }
     }
   }, [folderId])
+
+  useEffect(() => {
+    syncNowRef.current = syncNow
+  }, [syncNow])
 
   const request = useCallback(() => {
     if (!folderId) return
