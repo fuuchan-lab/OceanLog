@@ -14,7 +14,7 @@ import { useCompass } from '../hooks/useCompass.ts'
 import { MarkForm, type MarkDraft } from './MarkForm.tsx'
 import { OfflineCharts } from './OfflineCharts.tsx'
 import type { Hazard } from '../hazards.ts'
-import type { MsilSettings } from '../msil.ts'
+import { customMsilLayers, MSIL_PRESETS, setMsilLayerOn, type MsilSettings } from '../msil.ts'
 
 interface Props {
   geo: GeoState & { stale: boolean }
@@ -61,7 +61,7 @@ const LAYERS: BaseLayer[] = ['gsi-pale', 'gsi-photo', 'osm', 'gebco']
 
 /** 海図の画面。現在地・航跡の記録（出港・帰港）・地点の登録・オフライン用の保存 */
 export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPort, shownTrack, onClearShown, focus, hazards, msil, onMsil, onMapCenter }: Props) {
-  const [msilError, setMsilError] = useState<number | null>(null)
+  const [msilError, setMsilError] = useState(false)
   const { t, lang } = useI18n()
   const { fix } = geo
   const [follow, setFollow] = useState(true)
@@ -114,7 +114,7 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
           }}
           hazards={hazards}
           msil={msil}
-          onMsilError={setMsilError}
+          onMsilError={() => setMsilError(true)}
         />
         {/* 地図の上に、位置・速力・針路 */}
         <div className="hud">
@@ -166,20 +166,14 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
               <b>✚</b> {t('hazard.submerged')} · <b>✳</b> {t('hazard.awash')} · <b>✱</b> {t('hazard.covers')}
             </p>
             <p className="muted small">{t('layer.hazardsNote')}</p>
-            {msil.key && msil.layers.length > 0 && (
+            {msil.key && (
               <>
                 <p className="small legend-line">
                   <b>{t('msil.title')}</b>
                 </p>
-                {msil.layers.map((l) => (
+                {[...MSIL_PRESETS.map((p) => ({ id: p.id, name: t(p.name), url: p.url })), ...customMsilLayers(msil)].map((l) => (
                   <label key={l.id} className="check">
-                    <input
-                      type="checkbox"
-                      checked={msil.enabled.includes(l.id)}
-                      onChange={(e) =>
-                        onMsil({ ...msil, enabled: e.target.checked ? [...msil.enabled, l.id] : msil.enabled.filter((x) => x !== l.id) })
-                      }
-                    />
+                    <input type="checkbox" checked={msil.enabled.includes(l.id)} onChange={(e) => onMsil(setMsilLayerOn(msil, l, e.target.checked))} />
                     {l.name}
                   </label>
                 ))}
@@ -190,7 +184,7 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
         {msil.enabled.length > 0 && msil.key && (
           <p className="msil-notice">
             {t('msil.notice')}
-            {msilError !== null && <span className="error"> {t('msil.error', { status: msilError })}</span>}
+            {msilError && <span className="error"> {t('msil.error')}</span>}
           </p>
         )}
         {shownTrack && (

@@ -32,7 +32,7 @@ interface Props {
   hazards: Hazard[]
   /** 海しるの項目（自分のキーで表示） */
   msil: MsilSettings
-  onMsilError: (status: number) => void
+  onMsilError: () => void
 }
 
 const shipIcon = (course: number | null) =>
@@ -106,7 +106,7 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
     marks?: L.LayerGroup
     ports?: L.LayerGroup
     hazards?: L.LayerGroup
-    msil?: L.GridLayer[]
+    msil?: L.TileLayer[]
   }>({})
   const cb = useRef({ onUserMove, onMarkClick, onCenter, onMsilError })
   useEffect(() => {
@@ -231,7 +231,7 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
     if (!m) return
     const l = layers.current
     for (const layer of l.msil ?? []) layer.remove()
-    l.msil = msilKey ? msilShown.map((x) => msilLayer(x.url, msilKey, (status) => cb.current.onMsilError(status)).addTo(m)) : []
+    l.msil = msilKey ? msilShown.map((x) => msilLayer(x.url, msilKey, () => cb.current.onMsilError()).addTo(m)) : []
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [msilKey, msilSig])
 

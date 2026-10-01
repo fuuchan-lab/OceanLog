@@ -236,7 +236,7 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile, se
         <p className="muted small">{t('settings.unitsHint')}</p>
       </section>
 
-      <MsilSettingsCard msil={msil} onChange={onMsil} />
+      <MsilSettingsCard msil={msil} onChange={onMsil} signedIn={auth.account !== null} />
 
       <section className="card">
         <h2>{t('settings.customTiles')}</h2>
