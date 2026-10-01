@@ -3037,3 +3037,11 @@ button.slider-step {
   margin: 0;
   font-weight: 700;
 }
+
+/* 方位盤はボタン（タップで止める）。ボタンの見た目の枠は付けない */
+button.compass-on {
+  padding: 0;
+  border: 0;
+  min-height: 0;
+  cursor: pointer;
+}

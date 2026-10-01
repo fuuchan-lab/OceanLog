@@ -26,6 +26,25 @@ function smooth(prev: number | null, next: number): number {
   return (prev + diff * 0.25 + 360) % 360
 }
 
+const OFF_KEY = 'oceanlog-compass-off'
+
+function loadOff(): boolean {
+  try {
+    return localStorage.getItem(OFF_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function saveOff(off: boolean) {
+  try {
+    if (off) localStorage.setItem(OFF_KEY, '1')
+    else localStorage.removeItem(OFF_KEY)
+  } catch {
+    // 覚えられなくても、その回は切り替わる
+  }
+}
+
 /** 画面に出す値を変える、最小の角度の差と間隔（センサーは1秒に数十回届くので、毎回は描き直さない） */
 const PUBLISH_MIN_DEG = 1
 const PUBLISH_MIN_MS = 100
@@ -70,24 +89,38 @@ export function useCompass() {
     }
   }, [])
 
-  useEffect(() => {
-    if (needsPermission || !supported) return
-    return listen()
-  }, [needsPermission, supported, listen])
+  // 利用者が止めたか（コンパスをタップすると止まる）。この端末に覚えておく
+  const [off, setOff] = useState(loadOff)
 
-  /** iPhone: コンパスの利用を許可してもらう（ボタンを押した時に呼ぶ） */
+  useEffect(() => {
+    if (needsPermission || !supported || off) return
+    return listen()
+  }, [needsPermission, supported, off, listen])
+
+  /** コンパスを止める（方位盤をタップした時）。地図も北が上に戻る */
+  const disable = useCallback(() => {
+    setOff(true)
+    saveOff(true)
+    setHeading(null)
+    smoothed.current = null
+    published.current = { at: 0, value: null }
+  }, [])
+
+  /** コンパスを使う。iPhone は、はじめに利用を許可してもらう（ボタンを押した時に呼ぶ） */
   const enable = useCallback(async () => {
+    setOff(false)
+    saveOff(false)
     const fn = permissionFn()
-    if (!fn) return
+    if (!fn || !needsPermission) return
     try {
       if ((await fn()) === 'granted') setNeedsPermission(false)
       else setSupported(false)
     } catch {
       setSupported(false)
     }
-  }, [])
+  }, [needsPermission])
 
-  return { heading, needsPermission, supported, enable }
+  return { heading, needsPermission, supported, enable, disable, off }
 }
 
 export type CompassState = ReturnType<typeof useCompass>

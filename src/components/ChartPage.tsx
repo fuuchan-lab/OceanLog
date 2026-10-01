@@ -71,6 +71,7 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
   const [layersOpen, setLayersOpen] = useState(false)
   const [offlineOpen, setOfflineOpen] = useState(false)
   const [focusNow, setFocusNow] = useState(focus)
+  const homePort = profile.ports.find((p) => p.id === profile.activePortId) ?? profile.ports[0] ?? null
   useEffect(() => setFocusNow(focus), [focus])
   const active = log.activeTrack
   const compass = useCompass()
@@ -148,6 +149,20 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
           <button className={`fab${follow ? ' on' : ''}`} onClick={() => setFollow(true)} aria-label={t('chart.follow')} title={t('chart.follow')}>
             ⌖
           </button>
+          {homePort && (
+            // 出航地（ホームポート）を地図の中心に（現在地を追うのはやめる）
+            <button
+              className="fab"
+              onClick={() => {
+                setFollow(false)
+                setFocusNow({ lat: homePort.lat, lon: homePort.lon, zoom: 15, key: Date.now() })
+              }}
+              aria-label={t('chart.homePort', { name: homePort.name })}
+              title={t('chart.homePort', { name: homePort.name })}
+            >
+              🏠
+            </button>
+          )}
           {active !== null && (
             <button
               className={`fab${settings.headingUp ? ' on' : ''}`}

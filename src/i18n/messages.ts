@@ -105,6 +105,7 @@ export const ja = {
   // 海図
   'chart.follow': '現在地に戻る',
   'chart.layers': '地図の種類',
+  'chart.homePort': '出航地（{name}）を地図の中心にする',
   'chart.headingUpOn': '進行方向が上（スマホの向きに合わせて地図を回す）。押すと北が上',
   'chart.northUpOn': '北が上。押すと進行方向が上（スマホの向きに合わせて地図を回す）',
   'chart.hideTrack': '航跡の表示を消す',
@@ -154,6 +155,7 @@ export const ja = {
   'safety.hazard': '{kind}まで {m}m（{dir}）',
   'layer.hazardsNote': '暗岩・洗岩などは、OpenSeaMap に登録されたもの（日本は少ない）と、自分で記録したもの（青）を表示します。',
   'compass.enable': 'コンパスを使う',
+  'compass.tapToStop': 'タップでコンパスを止める',
   'compass.aria': 'コンパス {deg}°（{dir}）',
   'compass.cogShort': '(COG)',
   'pos.compass': 'コンパス',
@@ -641,6 +643,7 @@ export const en: Record<MessageKey, string> = {
 
   'chart.follow': 'Back to my position',
   'chart.layers': 'Map type',
+  'chart.homePort': 'Center the map on the home port ({name})',
   'chart.headingUpOn': 'Heading up (map turns with the phone). Tap for north up',
   'chart.northUpOn': 'North up. Tap for heading up (map turns with the phone)',
   'chart.hideTrack': 'Hide track',
@@ -690,6 +693,7 @@ export const en: Record<MessageKey, string> = {
   'safety.hazard': '{kind} {m} m to the {dir}',
   'layer.hazardsNote': 'Rocks and wrecks from OpenSeaMap (sparse in Japan) and your own records (blue) are shown.',
   'compass.enable': 'Use compass',
+  'compass.tapToStop': 'Tap to turn the compass off',
   'compass.aria': 'Compass {deg}° ({dir})',
   'compass.cogShort': '(COG)',
   'pos.compass': 'Compass',

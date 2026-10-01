@@ -8,9 +8,10 @@ import { useI18n } from '../i18n/useI18n.ts'
  */
 export function CompassRose({ compass, course }: { compass: CompassState; course: number | null }) {
   const { t, lang } = useI18n()
-  const { heading, needsPermission, supported, enable } = compass
+  const { heading, needsPermission, supported, enable, disable, off } = compass
 
-  if (needsPermission && supported) {
+  // 止めている時・iPhone で許可がまだの時は「コンパスを使う」ボタン
+  if ((needsPermission || off) && supported) {
     return (
       <button className="compass compass-enable" onClick={() => void enable()}>
         🧭
@@ -22,7 +23,14 @@ export function CompassRose({ compass, course }: { compass: CompassState; course
 
   const rot = -heading
   return (
-    <div className="compass" role="img" aria-label={t('compass.aria', { deg: Math.round(heading), dir: compassPoint(heading, lang) })}>
+    // タップするとコンパスを止める
+    <button
+      type="button"
+      className="compass compass-on"
+      onClick={disable}
+      aria-label={`${t('compass.aria', { deg: Math.round(heading), dir: compassPoint(heading, lang) })}。${t('compass.tapToStop')}`}
+      title={t('compass.tapToStop')}
+    >
       <svg viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="47" className="compass-face" />
         <g transform={`rotate(${rot} 50 50)`}>
@@ -47,6 +55,6 @@ export function CompassRose({ compass, course }: { compass: CompassState; course
           {compassPoint(heading, lang)}
         </text>
       </svg>
-    </div>
+    </button>
   )
 }
