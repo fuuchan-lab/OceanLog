@@ -95,7 +95,7 @@ function PortForm({ initial, here, onSave, onDelete, onClose }: { initial: HomeP
           label={t('port.danger')}
           value={danger}
           onChange={setDanger}
-          min={-50}
+          min={-300}
           max={300}
           step={5}
           unit="cm"

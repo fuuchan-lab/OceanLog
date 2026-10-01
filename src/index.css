@@ -3014,9 +3014,24 @@ button.slider-step {
   font-weight: 800;
 }
 .slider-scale {
+  position: relative;
   display: flex;
   justify-content: space-between;
-  padding: 0 52px;
+  margin: 0 52px;
+}
+.slider-zero {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-weight: 800;
+}
+.slider-zero::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  height: 6px;
+  border-left: 2px solid currentColor;
 }
 .slider-note {
   margin: 0;

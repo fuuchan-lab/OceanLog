@@ -456,7 +456,7 @@ export const ja = {
   'port.dangerVsMsl': '平均水面から {v} cm',
   'port.z0': '平均水面の高さ Z0',
   'port.dangerHint':
-    '干潮危険潮位: これより潮位が低いと、桟橋・スロープが使いにくくなる高さ。潮汐表（基本水準面を 0 とした潮位）の値で入れます。',
+    '干潮危険潮位: これより潮位が低いと、桟橋・スロープが使いにくくなる高さ。潮汐表（基本水準面を 0 とした潮位）の値で入れます。マイナスも設定できます（Z0 が分からず 0 のままの時は平均水面が基準になるので、干潮はマイナスになります）。',
   'port.z0Hint':
     'Z0: 潮汐表の基準から平均水面までの高さ。海上保安庁の潮汐表・港の資料に載っています（例: 東京 約110cm）。分からなければ 0（平均水面を基準）にして、危険潮位も平均水面からの高さで入れてください。',
   'port.summary': '危険潮位 {v}cm・Z0 {z0}cm',
@@ -986,7 +986,7 @@ export const en: Record<MessageKey, string> = {
   'port.dangerVsMsl': '{v} cm from mean sea level',
   'port.z0': 'Mean sea level Z0',
   'port.dangerHint':
-    'Low-tide danger level: below this tide height the pier or slipway is hard to use. Enter it as in your tide table (relative to chart datum).',
+    'Low-tide danger level: below this tide height the pier or slipway is hard to use. Enter it as in your tide table (relative to chart datum). It can be negative (e.g. when Z0 is unknown and left at 0, levels are measured from mean sea level, so low water is below 0).',
   'port.z0Hint':
     'Z0: height of mean sea level above chart datum, listed in official tide tables (e.g. Tokyo about 110 cm). If unknown, use 0 (mean sea level as datum) and enter the danger level relative to mean sea level.',
   'port.summary': 'danger {v} cm, Z0 {z0} cm',

@@ -46,6 +46,12 @@ export function SliderField({ label, value, onChange, min, max, step, fine = 1, 
           {lo}
           {unit}
         </span>
+        {/* マイナスからプラスまでの範囲では、0 の位置も示す */}
+        {lo < 0 && hi > 0 && (
+          <span className="slider-zero" style={{ left: `${(-lo / (hi - lo)) * 100}%` }}>
+            0
+          </span>
+        )}
         <span>
           {hi}
           {unit}
