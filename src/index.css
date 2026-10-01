@@ -3817,3 +3817,76 @@ button.sync-now.is-failed {
   border-color: var(--card);
   opacity: 1;
 }
+
+/* 「今」の印: 緑色で、ゆっくり点滅（風・波の予報の今の欄、潮位のグラフの今の線と点） */
+:root,
+:root[data-theme='light'] {
+  --now: #0a8a3a;
+}
+:root[data-theme='dark'] {
+  --now: #3ddc84;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --now: #3ddc84;
+  }
+}
+@keyframes now-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+@keyframes now-glow {
+  0%,
+  100% {
+    border-color: var(--now);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--now) 55%, transparent);
+  }
+  50% {
+    border-color: color-mix(in srgb, var(--now) 35%, var(--card));
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+/* 今の欄: 数字は読めるまま、緑の枠だけがゆっくり点滅する */
+.hour.hour-now {
+  border-color: var(--now);
+  border-width: 3px;
+  animation: now-glow 2.4s ease-in-out infinite;
+}
+.hour.hour-now > span:first-child {
+  color: var(--now);
+  font-weight: 800;
+}
+.bar-col.hour-now .bar {
+  background: var(--now);
+  animation: now-pulse 2.4s ease-in-out infinite;
+}
+.bar-col.hour-now > span {
+  color: var(--now);
+  font-weight: 800;
+}
+.tide-chart .now-line {
+  stroke: var(--now);
+  stroke-width: 2.5;
+  stroke-dasharray: none;
+  animation: now-pulse 2.4s ease-in-out infinite;
+}
+.tide-chart .spark-dot-now {
+  fill: var(--now);
+  stroke: #fff;
+  stroke-width: 2;
+  animation: now-pulse 2.4s ease-in-out infinite;
+}
+/* 動きを減らす設定の端末では点滅しない */
+@media (prefers-reduced-motion: reduce) {
+  .hour.hour-now,
+  .bar-col.hour-now .bar,
+  .tide-chart .now-line,
+  .tide-chart .spark-dot-now {
+    animation: none;
+  }
+}
