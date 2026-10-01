@@ -381,7 +381,8 @@ select {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 10;
+  /* 地図・下のメニュー・保存の帯より上に出す */
+  z-index: 2000;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
@@ -1436,6 +1437,9 @@ select.compact {
 
 .map-wrap {
   position: relative;
+  /* 地図（Leaflet）の中の重なり順（z-index 400〜1000）を、この枠の中に閉じ込める。ダイアログの下に地図が出ないように */
+  isolation: isolate;
+  z-index: 0;
   height: calc(100dvh - var(--dock-h, 64px) - 290px);
   min-height: 320px;
   border-radius: 14px;
