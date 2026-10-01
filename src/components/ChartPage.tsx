@@ -176,9 +176,6 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
           <button className="fab" onClick={() => setLayersOpen((o) => !o)} aria-label={t('chart.layers')} title={t('chart.layers')}>
             🗺️
           </button>
-          <button className="fab" onClick={() => setOfflineOpen(true)} aria-label={t('offline.title')} title={t('offline.title')}>
-            ⬇️
-          </button>
         </div>
         {layersOpen && (
           <div className="layers-panel">
@@ -253,6 +250,10 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
         </button>
       </div>
       {!active && <p className="muted small">{t('track.hint')}</p>}
+      {/* 出港前に、近辺の海図を端末に保存（地図の上ではなく、地図の下に置く） */}
+      <button className="secondary log-open" onClick={() => setOfflineOpen(true)}>
+        ⬇️ {t('offline.title')}
+      </button>
 
       {departOpen && (
         <DepartDialog
