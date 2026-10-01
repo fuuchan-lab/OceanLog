@@ -95,6 +95,8 @@ export const ja = {
   // 海図
   'chart.follow': '現在地に戻る',
   'chart.layers': '地図の種類',
+  'chart.headingUpOn': '進行方向が上（スマホの向きに合わせて地図を回す）。押すと北が上',
+  'chart.northUpOn': '北が上。押すと進行方向が上（スマホの向きに合わせて地図を回す）',
   'chart.hideTrack': '航跡の表示を消す',
   'layer.gsi-pale': '地理院地図（淡色）',
   'layer.gsi-photo': '地理院 航空写真',
@@ -609,6 +611,8 @@ export const en: Record<MessageKey, string> = {
 
   'chart.follow': 'Back to my position',
   'chart.layers': 'Map type',
+  'chart.headingUpOn': 'Heading up (map turns with the phone). Tap for north up',
+  'chart.northUpOn': 'North up. Tap for heading up (map turns with the phone)',
   'chart.hideTrack': 'Hide track',
   'layer.gsi-pale': 'GSI map (pale)',
   'layer.gsi-photo': 'GSI aerial photo',

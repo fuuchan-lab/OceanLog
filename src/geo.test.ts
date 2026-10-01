@@ -45,3 +45,13 @@ test('座標の入力: 度（小数）・度分・南緯西経', () => {
   assert.equal(parseCoord('95', true), null)
   assert.equal(parseCoord('abc', true), null)
 })
+
+test('磁気偏角: 東京付近は西に約7.5°、札幌は約9°、那覇は約5°', async () => {
+  const { magneticDeclination } = await import('./geo.ts')
+  const tokyo = magneticDeclination(35.68, 139.77)
+  assert.ok(tokyo > 7 && tokyo < 8, String(tokyo))
+  const sapporo = magneticDeclination(43.06, 141.35)
+  assert.ok(sapporo > 8.5 && sapporo < 9.8, String(sapporo))
+  const naha = magneticDeclination(26.21, 127.68)
+  assert.ok(naha > 4 && naha < 5.5, String(naha))
+})

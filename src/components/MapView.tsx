@@ -1,4 +1,6 @@
 import L from 'leaflet'
+// 地図を回す（航行モード中に、スマホの向きに合わせる）。leaflet-rotate は L（グローバル）を書き換える
+import 'leaflet-rotate'
 import 'leaflet/dist/leaflet.css'
 import { useEffect, useRef } from 'react'
 import type { LatLon } from '../geo.ts'
@@ -33,7 +35,14 @@ interface Props {
   /** 海しるの項目（自分のキーで表示） */
   msil: MsilSettings
   onMsilError: () => void
+  /** 地図を回す角度（度、時計回り）。0 なら北が上 */
+  rotation: number
 }
+
+type RotatableMap = L.Map & { setBearing: (deg: number) => void; getBearing: () => number }
+
+/** 自船の矢印の向き（画面の上からの角度）。地図を回している時は、その分を足す */
+const shipCourse = (course: number | null, rotation: number) => (course === null ? null : Math.round((course + rotation + 360) % 360))
 
 const shipIcon = (course: number | null) =>
   L.divIcon({
@@ -92,7 +101,7 @@ function trackLayer(points: TrackPoint[], cls: string): L.LayerGroup {
 }
 
 /** Leaflet の地図（海図）。React からは、表示する中身を渡すだけにする */
-export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTrack, marks, ports, focus, onMarkClick, onCenter, hazards, msil, onMsilError }: Props) {
+export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTrack, marks, ports, focus, onMarkClick, onCenter, hazards, msil, onMsilError, rotation }: Props) {
   const el = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
   const layers = useRef<{
@@ -117,7 +126,9 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
   useEffect(() => {
     if (!el.current || map.current) return
     const start = fix ?? ports[0] ?? { lat: 35.3, lon: 139.5 }
-    const m = L.map(el.current, { zoomControl: true, attributionControl: true }).setView([start.lat, start.lon], fix ? 13 : 10)
+    // 回転は、アプリが setBearing で決める（指での回転・プラグインのボタンやコンパスは使わない）
+    const options = { zoomControl: true, attributionControl: true, rotate: true, bearing: 0, rotateControl: false, touchRotate: false, shiftKeyRotate: false, compassBearing: false }
+    const m = L.map(el.current, options as L.MapOptions).setView([start.lat, start.lon], fix ? 13 : 10)
     L.control.scale({ imperial: false, metric: true, position: 'bottomleft' }).addTo(m)
     m.on('dragstart', () => cb.current.onUserMove())
     const report = () => {
@@ -170,13 +181,22 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
     const ll: L.LatLngExpression = [fix.lat, fix.lon]
     if (!l.ship) {
       l.accuracy = L.circle(ll, { radius: fix.accuracy, className: 'accuracy-circle', interactive: false }).addTo(m)
-      l.ship = L.marker(ll, { icon: shipIcon(fix.course), zIndexOffset: 1000, interactive: false }).addTo(m)
+      l.ship = L.marker(ll, { icon: shipIcon(shipCourse(fix.course, rotation)), zIndexOffset: 1000, interactive: false }).addTo(m)
     } else {
-      l.ship.setLatLng(ll).setIcon(shipIcon(fix.course))
+      l.ship.setLatLng(ll).setIcon(shipIcon(shipCourse(fix.course, rotation)))
       l.accuracy?.setLatLng(ll).setRadius(fix.accuracy)
     }
     if (follow) m.panTo(ll, { animate: true })
-  }, [fix, follow])
+  }, [fix, follow, rotation])
+
+  // 地図を回す（1° 未満の変化は無視して、描き直しを減らす）
+  useEffect(() => {
+    const m = map.current as RotatableMap | null
+    if (!m?.setBearing) return
+    const cur = m.getBearing()
+    const diff = Math.abs(((rotation - cur + 540) % 360) - 180)
+    if (diff >= 1) m.setBearing(rotation)
+  }, [rotation])
 
   // 記録中の航跡: 1分おきの点と、それを結ぶ線（アプリを閉じていて記録がない区間は点線）
   useEffect(() => {

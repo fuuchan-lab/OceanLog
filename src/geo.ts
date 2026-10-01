@@ -94,3 +94,17 @@ export function parseCoord(text: string, isLat: boolean): number | null {
   return Math.abs(signed) <= (isLat ? 90 : 180) ? signed : null
 }
 
+
+/**
+ * 磁気偏角（度、西偏を正）。国土地理院の 2020.0 年値の近似式（日本付近）。
+ * 真方位 = 磁方位 − 偏角。日本では 5〜10° ほど西に偏る
+ */
+export function magneticDeclination(lat: number, lon: number): number {
+  const dp = lat - 37
+  const dl = lon - 138
+  const minutes = 7 * 60 + 40.585 + 18.792 * dp - 6.761 * dl - 0.059 * dp * dp - 0.014 * dp * dl - 0.579 * dl * dl
+  return minutes / 60
+}
+
+/** 磁方位を真方位にする */
+export const trueHeading = (magnetic: number, at: { lat: number; lon: number }) => (((magnetic - magneticDeclination(at.lat, at.lon)) % 360) + 360) % 360

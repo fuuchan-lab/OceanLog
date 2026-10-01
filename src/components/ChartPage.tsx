@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fmtDuration, fmtNum } from '../format.ts'
-import { distance, formatDM, msToKnots, NM, type LatLon } from '../geo.ts'
+import { distance, formatDM, msToKnots, NM, trueHeading, type LatLon } from '../geo.ts'
 import type { GeoState } from '../hooks/useGeolocation.ts'
 import type { LogState } from '../hooks/useLog.ts'
 import { LOCALES } from '../i18n/context.ts'
@@ -75,6 +75,10 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
   const active = log.activeTrack
   const compass = useCompass()
   useWakeLock(active !== null)
+  // 航行モード中は、地図をスマホの向きに合わせて回す（コンパスは磁北なので、偏角を直して真北にそろえる）
+  const headingUp = active !== null && settings.headingUp && compass.heading !== null
+  const at = fix ?? profile.ports[0] ?? { lat: 35, lon: 139 }
+  const rotation = headingUp && compass.heading !== null ? -trueHeading(compass.heading, at) : 0
 
   const nearestPort = fix
     ? [...profile.ports].sort((a, b) => distance(fix, a) - distance(fix, b))[0]
@@ -101,6 +105,7 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
           settings={settings}
           fix={fix}
           follow={follow}
+          rotation={rotation}
           onUserMove={() => setFollow(false)}
           livePoints={log.livePoints}
           shownTrack={shownTrack}
@@ -143,6 +148,16 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
           <button className={`fab${follow ? ' on' : ''}`} onClick={() => setFollow(true)} aria-label={t('chart.follow')} title={t('chart.follow')}>
             ⌖
           </button>
+          {active !== null && (
+            <button
+              className={`fab${settings.headingUp ? ' on' : ''}`}
+              onClick={() => onSettings({ ...settings, headingUp: !settings.headingUp })}
+              aria-label={settings.headingUp ? t('chart.headingUpOn') : t('chart.northUpOn')}
+              title={settings.headingUp ? t('chart.headingUpOn') : t('chart.northUpOn')}
+            >
+              {settings.headingUp ? '⬆' : 'N'}
+            </button>
+          )}
           <button className="fab" onClick={() => setLayersOpen((o) => !o)} aria-label={t('chart.layers')} title={t('chart.layers')}>
             🗺️
           </button>

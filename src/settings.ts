@@ -11,6 +11,8 @@ export interface Settings {
   /** 自分で用意した海図タイルの URL（{z}/{x}/{y} を含む）。空なら使わない */
   customTileUrl: string
   customTileAttribution: string
+  /** 航行モード中は、地図をスマホの向き（進行方向）に合わせて回す。false なら北が上 */
+  headingUp: boolean
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -19,6 +21,7 @@ export const DEFAULT_SETTINGS: Settings = {
   seamarks: true,
   customTileUrl: '',
   customTileAttribution: '',
+  headingUp: true,
 }
 
 export const SETTINGS_KEY = 'oceanlog-settings'
@@ -41,6 +44,7 @@ export function settingsFrom(value: unknown): Settings {
     seamarks: v.seamarks !== false,
     customTileUrl: typeof v.customTileUrl === 'string' ? v.customTileUrl : '',
     customTileAttribution: typeof v.customTileAttribution === 'string' ? v.customTileAttribution : '',
+    headingUp: v.headingUp !== false,
   }
 }
 
