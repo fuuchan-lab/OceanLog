@@ -3733,3 +3733,87 @@ button.link {
   border-color: var(--ok-text);
   font-weight: 700;
 }
+
+/* ボタンを押した時: 少し縮んで色が濃くなる（押したことが分かるように） */
+button {
+  transition: transform 0.08s ease, filter 0.08s ease, background-color 0.2s ease, color 0.2s ease;
+}
+button:not(:disabled):active {
+  transform: scale(0.95);
+  filter: brightness(0.82);
+}
+.fab:not(:disabled):active,
+.nav-item:not(:disabled):active {
+  transform: scale(0.9);
+}
+
+/* 処理中のくるくる */
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 3px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: -0.15em;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 今すぐ同期: 同期中・完了・失敗で色を変える */
+button.sync-now.is-busy {
+  background: var(--accent);
+  color: var(--accent-text);
+  opacity: 1;
+}
+button.sync-now.is-done {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+  border-color: var(--ok-text);
+}
+button.sync-now.is-failed {
+  background: var(--caution-bg);
+  color: var(--caution-text);
+}
+
+/* ドライブへの送信の進み具合 */
+.drive-step {
+  display: inline-block;
+  font-weight: 600;
+}
+.drive-busy {
+  animation: blink 1.2s ease-in-out infinite;
+}
+.drive-done {
+  color: var(--ok-text);
+}
+@keyframes blink {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* 上の Google ボタン: 同期中・送信待ちは、アイコンの周りがくるくる回る */
+.google-button-syncing .google-mark {
+  position: relative;
+}
+.google-button-syncing .google-mark::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  border-right-color: transparent;
+  animation: spin 0.9s linear infinite;
+}
+.save-bar-done button.secondary,
+.save-bar-done button.secondary:disabled {
+  background: var(--card);
+  color: var(--text);
+  border-color: var(--card);
+  opacity: 1;
+}

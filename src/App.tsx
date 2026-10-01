@@ -297,7 +297,7 @@ export default function App() {
 
       {view === 'tide' && <TidePage at={basis ?? data?.at ?? null} conditions={data} profile={profile} underway={basisIsHere} />}
 
-      {view === 'docs' && <DocsPage profile={profile} onChange={updateProfile} signedIn={auth.account !== null} />}
+      {view === 'docs' && <DocsPage profile={profile} onChange={updateProfile} signedIn={auth.account !== null} sync={sync} />}
 
       {view === 'settings' && (
         <SettingsPage

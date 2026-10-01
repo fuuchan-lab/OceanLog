@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import type { SyncState } from '../hooks/useSync.ts'
+import { DriveProgress } from './SyncFeedback.tsx'
 import { newId } from '../device.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 import { checkMsil, customMsilLayers, isMsilUrl, MSIL_HOWTO, MSIL_PORTAL, MSIL_PRESETS, setMsilLayerOn, type MsilSettings } from '../msil.ts'
@@ -6,13 +8,13 @@ import { checkMsil, customMsilLayers, isMsilUrl, MSIL_HOWTO, MSIL_PORTAL, MSIL_P
 /**
  * 海しる（海上保安庁）の設定。利用登録の手順の案内・自分のキー・地図に重ねる項目
  */
-export function MsilSettingsCard({ msil, onChange, signedIn }: { msil: MsilSettings; onChange: (m: MsilSettings) => void; signedIn: boolean }) {
+export function MsilSettingsCard({ msil, onChange, signedIn, sync }: { msil: MsilSettings; onChange: (m: MsilSettings) => void; signedIn: boolean; sync: SyncState }) {
   const { t } = useI18n()
   const [key, setKey] = useState(msil.key)
   const [showKey, setShowKey] = useState(false)
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useState<number | null>(null)
   // 保存した後の、海しるにつながるかの確認
   const [check, setCheck] = useState<'ok' | 'failed' | 'offline' | 'checking' | null>(null)
   // 手順は、キーが入っていない時だけ最初から開く（保存した時に閉じて画面がずれないよう、開閉は利用者に任せる）
@@ -71,7 +73,7 @@ export function MsilSettingsCard({ msil, onChange, signedIn }: { msil: MsilSetti
           spellCheck={false}
           onChange={(e) => {
             setKey(e.target.value)
-            setSaved(false)
+            setSaved(null)
             setCheck(null)
           }}
         />
@@ -89,7 +91,7 @@ export function MsilSettingsCard({ msil, onChange, signedIn }: { msil: MsilSetti
             // はじめてキーを入れた時は、等深線を表示する（何も表示しないと、保存できたか分かりにくいため）
             onChange(msil.enabled.length === 0 && k ? setMsilLayerOn({ ...msil, key: k }, presets[0], true) : { ...msil, key: k })
             setKey(k)
-            setSaved(true)
+            setSaved(Date.now())
             navigator.vibrate?.(30)
             void verify(k)
           }}
@@ -101,7 +103,7 @@ export function MsilSettingsCard({ msil, onChange, signedIn }: { msil: MsilSetti
             className="link danger"
             onClick={() => {
               setKey('')
-              setSaved(false)
+              setSaved(null)
               setCheck(null)
               onChange({ ...msil, key: '', enabled: [] })
             }}
@@ -114,8 +116,13 @@ export function MsilSettingsCard({ msil, onChange, signedIn }: { msil: MsilSetti
       <div className={msil.key ? 'ok' : 'banner banner-caution'} role="status" aria-live="polite">
         {msil.key ? (
           <>
-            ✅ {saved ? t('msil.saved') : t('msil.keySet', { tail: msil.key.slice(-4) })}
-            {saved && signedIn && <> {t('msil.savedDrive')}</>}
+            ✅ {saved !== null ? t('msil.saved') : t('msil.keySet', { tail: msil.key.slice(-4) })}
+            {saved !== null && (
+              <>
+                {' '}
+                <DriveProgress sync={sync} signedIn={signedIn} savedAt={saved} />
+              </>
+            )}
             {check === 'checking' && <div>⏳ {t('msil.checking')}</div>}
             {check === 'ok' && <div>✅ {t('msil.checkOk')}</div>}
             {check === 'failed' && <div className="error">⚠️ {t('msil.checkBadKey')}</div>}

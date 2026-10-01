@@ -6,6 +6,7 @@ import type { SyncState } from '../hooks/useSync.ts'
 import { LOCALES, type TFn } from '../i18n/context.ts'
 import { useI18n } from '../i18n/useI18n.ts'
 import { GoogleLogo } from './GoogleLogo.tsx'
+import { SyncNowButton } from './SyncFeedback.tsx'
 
 interface Props {
   auth: GoogleAuth
@@ -34,7 +35,7 @@ export function Header({ auth, sync, unsyncedCount }: Props) {
         </div>
         <div className="topbar-actions">
           <button
-            className={`google-button${live ? ' google-button-live' : ''}`}
+            className={`google-button${live ? ' google-button-live' : ''}${account && (sync.status === 'syncing' || sync.pending) ? ' google-button-syncing' : ''}`}
             disabled={connecting}
             onClick={() => (account ? setAccountOpen(true) : void login())}
           >
@@ -142,9 +143,7 @@ function AccountModal({ auth, sync, unsyncedCount, onClose }: ModalProps) {
             {t('err.detail')}: {sync.error}
           </p>
         )}
-        <button className="secondary" disabled={sync.status === 'syncing'} onClick={() => void sync.syncNow()}>
-          {t('account.syncNow')}
-        </button>
+        <SyncNowButton sync={sync} />
         <button
           className="secondary"
           onClick={() => {

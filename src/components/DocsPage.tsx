@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import type { SyncState } from '../hooks/useSync.ts'
+import { DriveProgress } from './SyncFeedback.tsx'
 import { deletePhoto, getPhoto, putPhoto } from '../db.ts'
 import { newId } from '../device.ts'
 import { LOCALES } from '../i18n/context.ts'
@@ -13,6 +15,7 @@ interface Props {
   profile: Profile
   onChange: (update: (p: Profile) => Profile) => void
   signedIn: boolean
+  sync: SyncState
 }
 
 /** 端末に保存した写真を表示する。写真の ID が変わったら読み直す */
@@ -136,11 +139,11 @@ function changed(p: Profile, d: Draft): boolean {
 }
 
 /** 資格・船舶情報: 船の情報と写真、船舶検査手帳・免許証の写真、有効期限 */
-export function DocsPage({ profile, onChange, signedIn }: Props) {
+export function DocsPage({ profile, onChange, signedIn, sync }: Props) {
   const { t, lang } = useI18n()
   const [viewing, setViewing] = useState<string | null>(null)
   const [draft, setDraft] = useState<Draft>(() => toDraft(profile))
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useState<number | null>(null)
   const dirty = changed(profile, draft)
   // 別の端末の変更をドライブから読み込んだ時は、入力中でなければ入力欄も合わせる
   const [from, setFrom] = useState(profile)
@@ -150,12 +153,12 @@ export function DocsPage({ profile, onChange, signedIn }: Props) {
   }
   const set = (patch: Partial<Draft>) => {
     setDraft((d) => ({ ...d, ...patch }))
-    setSaved(false)
+    setSaved(null)
   }
   const save = () => {
     onChange((p) => applyDraft(p, draft))
     setDraft(toDraft(applyDraft(profile, draft)))
-    setSaved(true)
+    setSaved(Date.now())
     navigator.vibrate?.(30)
   }
   // 保存せずにほかの画面に移った時も、入力した内容をなくさないよう保存する
@@ -230,7 +233,7 @@ export function DocsPage({ profile, onChange, signedIn }: Props) {
         }
         return boat
       })
-      setSaved(false)
+      setSaved(null)
       setOcr({ kind, progress: null, result: filled.length ? t('ocr.filled', { fields: filled.join('・') }) : t('ocr.nothing') })
     } catch (e) {
       console.error('[ocr]', e)
@@ -414,9 +417,17 @@ export function DocsPage({ profile, onChange, signedIn }: Props) {
       })}
       <p className="muted small">{t('docs.privacy')}</p>
       {/* 保存ボタン（画面の下に固定）。変更がある時だけ押せる */}
-      <div className={`save-bar${dirty ? ' save-bar-dirty' : ''}`} role="status" aria-live="polite">
+      <div className={`save-bar${dirty ? ' save-bar-dirty' : saved ? ' save-bar-done' : ''}`} role="status" aria-live="polite">
         <span className="small">
-          {dirty ? t('docs.unsaved') : saved ? `✅ ${t('docs.saved')}${signedIn ? ' ' + t('docs.savedDrive') : ''}` : `✓ ${t('docs.allSaved')}`}
+          {dirty ? (
+            t('docs.unsaved')
+          ) : saved ? (
+            <>
+              ✅ {t('docs.saved')} <DriveProgress sync={sync} signedIn={signedIn} savedAt={saved} />
+            </>
+          ) : (
+            `✓ ${t('docs.allSaved')}`
+          )}
         </span>
         {dirty && (
           <button className="link" onClick={() => setDraft(toDraft(profile))}>

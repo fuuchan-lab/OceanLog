@@ -10,6 +10,8 @@ export interface SyncState {
   syncNow: () => Promise<void>
   /** 記録を変えた時に呼ぶ。少し待ってから同期する */
   request: () => void
+  /** 変更があり、同期を待っている（数秒後に送る） */
+  pending: boolean
 }
 
 /** ログイン中は、記録を変えた時・ネットが戻った時・定期的に、Google ドライブと同期する */
@@ -17,6 +19,7 @@ export function useSync(account: DriveAccount | null, profile: ProfileAccess, pr
   const [status, setStatus] = useState<SyncState['status']>('idle')
   const [lastSyncAt, setLastSyncAt] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
   const running = useRef(false)
   const again = useRef(false)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -41,6 +44,7 @@ export function useSync(account: DriveAccount | null, profile: ProfileAccess, pr
       return
     }
     running.current = true
+    setPending(false)
     setStatus('syncing')
     try {
       await syncAll(
@@ -67,9 +71,11 @@ export function useSync(account: DriveAccount | null, profile: ProfileAccess, pr
   }, [folderId])
 
   const request = useCallback(() => {
+    if (!folderId) return
+    setPending(true)
     clearTimeout(timer.current)
     timer.current = setTimeout(() => void syncNow(), 3000)
-  }, [syncNow])
+  }, [syncNow, folderId])
 
   useEffect(() => {
     if (!folderId) return
@@ -84,5 +90,5 @@ export function useSync(account: DriveAccount | null, profile: ProfileAccess, pr
     }
   }, [folderId, syncNow])
 
-  return { status, lastSyncAt, error, syncNow, request }
+  return { status, lastSyncAt, error, syncNow, request, pending }
 }

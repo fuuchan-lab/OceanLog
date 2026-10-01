@@ -10,6 +10,7 @@ import type { HomePort, Profile } from '../profile.ts'
 import { isValidTileUrl, type Settings } from '../settings.ts'
 import type { ThemePreference } from '../theme.ts'
 import { syncText } from './Header.tsx'
+import { DriveProgress, driveSettled, SyncNowButton } from './SyncFeedback.tsx'
 import { MapPicker } from './MapPicker.tsx'
 import { MsilSettingsCard } from './MsilSettingsCard.tsx'
 import type { MsilSettings } from '../msil.ts'
@@ -124,9 +125,14 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
     setSavedAt(Date.now())
     navigator.vibrate?.(20)
     clearTimeout(flashTimer.current)
-    flashTimer.current = setTimeout(() => setSavedAt(null), 4000)
   }
-  useEffect(() => () => clearTimeout(flashTimer.current), [])
+  // ドライブへの送信が終わってから、少しして消す
+  const settled = savedAt !== null && driveSettled(sync, auth.account !== null, savedAt)
+  useEffect(() => {
+    if (!settled) return
+    flashTimer.current = setTimeout(() => setSavedAt(null), 4000)
+    return () => clearTimeout(flashTimer.current)
+  }, [settled])
   const onProfile = (update: (p: Profile) => Profile) => {
     onProfileRaw(update)
     flash()
@@ -189,9 +195,7 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
               {syncText(sync, unsyncedCount, t, LOCALES[lang])}
             </p>
             <div className="row gap">
-              <button className="secondary" disabled={sync.status === 'syncing'} onClick={() => void sync.syncNow()}>
-                {t('account.syncNow')}
-              </button>
+              <SyncNowButton sync={sync} />
               <button className="secondary" onClick={() => void auth.switchAccount()}>
                 {t('account.switch')}
               </button>
@@ -263,7 +267,7 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
         <p className="muted small">{t('settings.unitsHint')}</p>
       </section>
 
-      <MsilSettingsCard msil={msil} onChange={onMsil} signedIn={auth.account !== null} />
+      <MsilSettingsCard msil={msil} onChange={onMsil} signedIn={auth.account !== null} sync={sync} />
 
       <section className="card">
         <h2>{t('settings.customTiles')}</h2>
@@ -389,9 +393,13 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
       {/* 保存の状態（画面の下に固定） */}
       <div className={`save-bar${savedAt ? ' save-bar-done' : ''}`} role="status" aria-live="polite">
         <span className="small">
-          {savedAt
-            ? `✅ ${t('settings.saved')}${auth.account ? ' ' + t('docs.savedDrive') : ''}`
-            : `✓ ${t('settings.autoSave')}`}
+          {savedAt ? (
+            <>
+              ✅ {t('settings.saved')} <DriveProgress sync={sync} signedIn={auth.account !== null} savedAt={savedAt} />
+            </>
+          ) : (
+            `✓ ${t('settings.autoSave')}`
+          )}
         </span>
       </div>
     </>
