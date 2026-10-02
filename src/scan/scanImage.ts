@@ -35,9 +35,9 @@ function readPixels(source: CanvasImageSource, width: number, height: number): R
 }
 
 /** 写真を読み込む（撮影した向きに合わせて回し、大きすぎれば縮める） */
-export async function loadPhoto(file: Blob): Promise<RGBAImage> {
+export async function loadPhoto(file: Blob, maxSide = LOAD_MAX_SIDE): Promise<RGBAImage> {
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
-  const s = Math.min(1, LOAD_MAX_SIDE / Math.max(bitmap.width, bitmap.height))
+  const s = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height))
   const img = readPixels(bitmap, Math.round(bitmap.width * s), Math.round(bitmap.height * s))
   bitmap.close()
   return img
@@ -68,8 +68,8 @@ export function findDocument(img: RGBAImage): { quad: Quad; found: boolean } {
  * 四隅の範囲を長方形に直し（台形補正）、向きを直す。
  * enhance のときは、照明のムラを消して白黒の書類のように整える（免許証の顔写真などを残したい時はカラーのまま）
  */
-export function makeDocument(img: RGBAImage, quad: Quad, rotation: number, enhance = false): RGBAImage {
-  const { width, height } = outputSize(quad)
+export function makeDocument(img: RGBAImage, quad: Quad, rotation: number, enhance = false, maxSide?: number): RGBAImage {
+  const { width, height } = outputSize(quad, maxSide)
   const flat = warpQuad(img, quad, width, height)
   return rotate90(enhance ? enhanceDocument(flat) : flat, rotation)
 }

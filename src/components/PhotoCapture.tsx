@@ -15,6 +15,8 @@ interface Props {
   label: string
   /** 書類なら、四隅を合わせて台形補正する（LeadLog の名刺と同じ）。船の写真などは、そのまま保存する */
   document: boolean
+  /** 保存する画像の長辺の最大（海図は細かい所まで見たいので大きく） */
+  maxSide?: number
   /** 補正した画像（書類の場合は、文字の読み取りに使うキャンバスも渡す） */
   onPhoto: (blob: Blob, canvas?: HTMLCanvasElement) => void
 }
@@ -23,7 +25,7 @@ interface Props {
  * 写真を撮る・選ぶ（LeadLog の名刺の撮影と同じ流れ）。
  * 撮影 → 書類の四隅を自動で探す → 手で合わせる（再撮影・回転もできる）→ 長方形に補正して保存（文字の読み取りは呼び出し側）
  */
-export function PhotoCapture({ label, document: isDoc, onPhoto }: Props) {
+export function PhotoCapture({ label, document: isDoc, onPhoto, maxSide }: Props) {
   const { t } = useI18n()
   const cameraRef = useRef<HTMLInputElement>(null)
   const pickRef = useRef<HTMLInputElement>(null)
@@ -46,12 +48,12 @@ export function PhotoCapture({ label, document: isDoc, onPhoto }: Props) {
   const onFile = async (file: Blob | undefined, guide?: Quad) => {
     if (!file) return
     if (!isDoc) {
-      onPhoto(await shrinkImage(file))
+      onPhoto(await shrinkImage(file, maxSide))
       return
     }
     setStage({ kind: 'loading' })
     try {
-      const image = await loadPhoto(file)
+      const image = await loadPhoto(file, maxSide ? Math.round(maxSide * 1.15) : undefined)
       const detected = findDocument(image)
       const { quad, found } = !detected.found && guide ? { quad: guide, found: false } : detected
       setStage({ kind: 'adjust', image, quad, found })
@@ -67,7 +69,7 @@ export function PhotoCapture({ label, document: isDoc, onPhoto }: Props) {
     // 補正の計算で画面が固まる前に、「補正しています」を表示させる
     await new Promise((r) => setTimeout(r, 30))
     try {
-      const canvas = toCanvas(makeDocument(image, quad, rotation, enhance))
+      const canvas = toCanvas(makeDocument(image, quad, rotation, enhance, maxSide))
       onPhoto(await canvasToJpeg(canvas, 0.88), canvas)
     } catch (e) {
       console.error('[scan-process]', e)

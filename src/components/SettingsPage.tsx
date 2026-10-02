@@ -13,6 +13,9 @@ import { syncText } from './Header.tsx'
 import { DriveProgress, driveSettled, SyncNowButton } from './SyncFeedback.tsx'
 import { MapPicker } from './MapPicker.tsx'
 import { SliderField } from './SliderField.tsx'
+import { ChartEditor } from './ChartEditor.tsx'
+import { fitChart, type UserChart } from '../chartGeo.ts'
+import { deletePhoto } from '../db.ts'
 import { MsilSettingsCard } from './MsilSettingsCard.tsx'
 import type { MsilSettings } from '../msil.ts'
 
@@ -151,6 +154,8 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
   }
   const { t, lang } = useI18n()
   const [editing, setEditing] = useState<{ port: HomePort; isNew: boolean } | null>(null)
+  // 自分の海図の登録・位置合わせ（新しく登録する時は 'new'）
+  const [chartEditing, setChartEditing] = useState<UserChart | 'new' | null>(null)
   const [tileUrl, setTileUrl] = useState(settings.customTileUrl)
   const [tileAttr, setTileAttr] = useState(settings.customTileAttribution)
   // 別の端末の設定をドライブから読み込んだ時は、入力欄も合わせる
@@ -275,6 +280,35 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
         <p className="muted small">{t('settings.unitsHint')}</p>
       </section>
 
+      <section className="card">
+        <h2>🗺️ {t('uchart.title')}</h2>
+        <p className="muted small">{t('uchart.lead')}</p>
+        {profile.charts.length > 0 && (
+          <ul className="log-list">
+            {profile.charts.map((c) => {
+              const fit = fitChart(c.points)
+              return (
+                <li key={c.id}>
+                  <span>
+                    <b>{c.name || t('uchart.title')}</b>
+                    <br />
+                    <span className="small muted">
+                      {t('uchart.points', { n: c.points.length })} · {fit ? t('uchart.accuracy', { m: Math.max(1, Math.round(fit.rms)) }) : t('uchart.notFitted')}
+                    </span>
+                  </span>
+                  <button className="link" onClick={() => setChartEditing(c)}>
+                    {t('common.edit')}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+        <button className="secondary" onClick={() => setChartEditing('new')}>
+          ＋ {t('uchart.add')}
+        </button>
+      </section>
+
       <MsilSettingsCard msil={msil} onChange={onMsil} signedIn={auth.account !== null} sync={sync} />
 
       <section className="card">
@@ -378,6 +412,32 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
         <p className="muted small">{t('about.local')}</p>
       </section>
 
+      {chartEditing && (
+        <ChartEditor
+          initial={chartEditing === 'new' ? null : chartEditing}
+          here={here}
+          onClose={() => setChartEditing(null)}
+          onSave={(c) => {
+            onProfile((p) => ({ ...p, charts: p.charts.some((x) => x.id === c.id) ? p.charts.map((x) => (x.id === c.id ? c : x)) : [...p.charts, c] }))
+            // 初めて登録した海図は、航行の画面ですぐ使えるように選んでおく
+            if (chartEditing === 'new') onSettings({ ...settings, userChartId: c.id })
+            setChartEditing(null)
+          }}
+          onDelete={
+            chartEditing === 'new'
+              ? undefined
+              : () => {
+                  const target = chartEditing
+                  if (!confirm(t('uchart.deleteConfirm', { name: target.name }))) return
+                  onProfile((p) => ({ ...p, charts: p.charts.filter((x) => x.id !== target.id) }))
+                  if (settings.userChartId === target.id) onSettings({ ...settings, userChartId: null })
+                  void deletePhoto(target.id)
+                  setChartEditing(null)
+                }
+          }
+        />
+      )}
+
       {editing && (
         <PortForm
           initial={editing.port}
@@ -400,7 +460,7 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
       )}
       {/* 保存の状態（画面の下に固定） */}
       {/* 出航地の編集中は、編集画面の「保存」を使うので隠す */}
-      {!editing && (
+      {!editing && !chartEditing && (
         <div className={`save-bar${savedAt ? ' save-bar-done' : ''}`} role="status" aria-live="polite">
           <span className="small">
             {savedAt ? (

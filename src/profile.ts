@@ -3,6 +3,7 @@
  */
 import { newId } from './device.ts'
 import { DEFAULT_EQUIPMENT, parseEquipment, type EquipmentSettings } from './equipment.ts'
+import { parseUserCharts, type UserChart } from './chartGeo.ts'
 
 export interface HomePort {
   id: string
@@ -76,6 +77,8 @@ export interface Profile {
   docs: Docs
   /** 法定備品のチェックリスト */
   equipment: EquipmentSettings
+  /** 自分で撮影・アップロードした海図（画像は photos、基準点はここ） */
+  charts: UserChart[]
   /** 出港時・安全の表示に使う出航地 */
   activePortId: string | null
   updatedAt: number
@@ -85,7 +88,7 @@ export const EMPTY_BOAT: Boat = { type: 'boat', name: '', registration: '', phot
 
 export const EMPTY_DOCS: Docs = { items: [], licenseType: '', licenseExpiry: '', inspectionExpiry: '' }
 
-export const EMPTY_PROFILE: Profile = { ports: [], boat: EMPTY_BOAT, docs: EMPTY_DOCS, equipment: DEFAULT_EQUIPMENT, activePortId: null, updatedAt: 0 }
+export const EMPTY_PROFILE: Profile = { ports: [], boat: EMPTY_BOAT, docs: EMPTY_DOCS, equipment: DEFAULT_EQUIPMENT, charts: [], activePortId: null, updatedAt: 0 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -134,6 +137,7 @@ export function parseProfile(value: unknown): Profile {
     },
     docs: parseDocs(v.docs),
     equipment: parseEquipment(v.equipment),
+    charts: parseUserCharts(v.charts),
     activePortId: typeof v.activePortId === 'string' && ports.some((p) => p.id === v.activePortId) ? v.activePortId : null,
     updatedAt: numOr(v.updatedAt, 0),
   }
@@ -164,9 +168,9 @@ function parseDocs(value: unknown): Docs {
   }
 }
 
-/** プロフィールが使っている写真の ID（船の写真と書類の写真） */
+/** プロフィールが使っている写真の ID（船の写真・書類の写真・自分の海図） */
 export function referencedPhotoIds(p: Profile): string[] {
-  return [...(p.boat.photoId ? [p.boat.photoId] : []), ...p.docs.items.map((d) => d.id)]
+  return [...(p.boat.photoId ? [p.boat.photoId] : []), ...p.docs.items.map((d) => d.id), ...p.charts.map((c) => c.id)]
 }
 
 /** 有効期限までの日数（期限の日を含む）。未設定なら null。過ぎていれば負 */
