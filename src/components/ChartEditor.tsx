@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { fitChart, MIN_POINTS, type ControlPoint, type UserChart } from '../chartGeo.ts'
+import { CURVED_MIN_POINTS, fitChart, MIN_POINTS, pointsCoverage, RECOMMENDED_POINTS, type ControlPoint, type UserChart } from '../chartGeo.ts'
 import { deletePhoto, putPhoto } from '../db.ts'
 import { newId } from '../device.ts'
 import { formatPosition, parseCoord, type LatLon } from '../geo.ts'
@@ -13,6 +13,8 @@ interface Props {
   /** 編集する海図。新しく登録する時は null */
   initial: UserChart | null
   here: LatLon | null
+  /** 出航地のまわりの海図として追加する時の出航地（地図で選ぶ時は、その近くから） */
+  port?: { id: string; lat: number; lon: number } | null
   onSave: (chart: UserChart) => void
   onDelete?: () => void
   onClose: () => void
@@ -27,7 +29,8 @@ const WARN_ERROR_M = 100
  * 自分の海図を登録する: 写真を撮る（四隅を合わせて補正）→ 名前 → 基準点を3〜4か所以上。
  * 基準点は、画面の中央の ＋ を海図の目印（経緯線の交点・灯台・岬など）に合わせ、その緯度経度を入力するか、地図で同じ場所を選ぶ
  */
-export function ChartEditor({ initial, here, onSave, onDelete, onClose }: Props) {
+export function ChartEditor({ initial, here, port, onSave, onDelete, onClose }: Props) {
+  const portId = port?.id ?? initial?.portId ?? null
   const { t } = useI18n()
   const [chart, setChart] = useState<UserChart | null>(initial)
   const [name, setName] = useState(initial?.name ?? '')
@@ -51,7 +54,7 @@ export function ChartEditor({ initial, here, onSave, onDelete, onClose }: Props)
       const bmp = await createImageBitmap(blob)
       if (fresh.current) await deletePhoto(fresh.current)
       fresh.current = id
-      setChart({ id, name, width: bmp.width, height: bmp.height, points: [], createdAt: Date.now() })
+      setChart({ id, name, width: bmp.width, height: bmp.height, points: [], portId: portId ?? null, createdAt: Date.now() })
       bmp.close()
     } finally {
       setBusy(false)
@@ -71,7 +74,7 @@ export function ChartEditor({ initial, here, onSave, onDelete, onClose }: Props)
     const guess = tr ? tr.toLatLon(c.x, c.y) : null
     setLatText('')
     setLonText('')
-    setMapAt(guess ?? here)
+    setMapAt(guess ?? (port ? { lat: port.lat, lon: port.lon } : here))
     setUseMap(false)
   }
 
@@ -114,7 +117,7 @@ export function ChartEditor({ initial, here, onSave, onDelete, onClose }: Props)
             <ol className="steps small">
               <li>{t('uchart.step1')}</li>
               <li>{t('uchart.step2')}</li>
-              <li>{t('uchart.step3', { n: MIN_POINTS })}</li>
+              <li>{t('uchart.step3', { n: MIN_POINTS, r: RECOMMENDED_POINTS })}</li>
             </ol>
             {url && (
               <div className="chart-edit-view">
@@ -207,16 +210,20 @@ export function ChartEditor({ initial, here, onSave, onDelete, onClose }: Props)
                 ))}
               </ul>
             )}
-            <p className={`small ${tr ? (tr.rms > WARN_ERROR_M ? 'error' : 'ok') : 'muted'}`} role="status">
+            <p className={`small ${tr ? (Math.max(...errors) > WARN_ERROR_M ? 'error' : 'ok') : 'muted'}`} role="status">
               {chart.points.length < MIN_POINTS
                 ? t('uchart.needMore', { n: MIN_POINTS - chart.points.length })
                 : !tr
                   ? t('uchart.inLine')
-                  : tr.rms > WARN_ERROR_M
-                    ? t('uchart.checkPoint', { n: worst + 1, m: Math.round(tr.rms) })
-                    : t('uchart.fitOk', { m: Math.max(1, Math.round(tr.rms)) })}
+                  : Math.max(...errors) > WARN_ERROR_M
+                    ? t('uchart.checkPoint', { n: worst + 1, m: Math.round(errors[worst]) })
+                    : tr.expected !== null
+                      ? t('uchart.fitExpected', { m: Math.max(1, Math.round(tr.expected)) })
+                      : t('uchart.fitOk', { m: Math.max(1, Math.round(tr.rms)) })}
             </p>
-            {chart.points.length === 3 && tr && <p className="muted small">{t('uchart.fourBetter')}</p>}
+            {tr && chart.points.length < RECOMMENDED_POINTS && <p className="muted small">{t('uchart.moreBetter', { r: RECOMMENDED_POINTS })}</p>}
+            {tr && chart.points.length >= MIN_POINTS && pointsCoverage(chart, chart.points) < 0.35 && <p className="caution-text small">{t('uchart.spread')}</p>}
+            {tr && <p className="muted small">{t(tr.kind === 'curved' ? 'uchart.curvedOn' : 'uchart.curvedOff', { n: CURVED_MIN_POINTS })}</p>}
           </>
         )}
 

@@ -13,6 +13,8 @@ import { splitSegments } from '../voyage.ts'
 import type { Hazard, WaterLevel } from '../hazards.ts'
 import type { MsilSettings } from '../msil.ts'
 import { msilLayer } from './msilLayer.ts'
+import { chartOverlay } from './chartOverlay.ts'
+import type { UserChart } from '../chartGeo.ts'
 
 interface Props {
   settings: Settings
@@ -37,6 +39,8 @@ interface Props {
   onMsilError: () => void
   /** 地図を回す角度（度、時計回り）。0 なら北が上 */
   rotation: number
+  /** 自分で撮影・アップロードした海図（位置合わせ済みのものを重ねる） */
+  userCharts: UserChart[]
 }
 
 type RotatableMap = L.Map & { setBearing: (deg: number) => void; getBearing: () => number }
@@ -101,13 +105,14 @@ function trackLayer(points: TrackPoint[], cls: string): L.LayerGroup {
 }
 
 /** Leaflet の地図（海図）。React からは、表示する中身を渡すだけにする */
-export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTrack, marks, ports, focus, onMarkClick, onCenter, hazards, msil, onMsilError, rotation }: Props) {
+export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTrack, marks, ports, focus, onMarkClick, onCenter, hazards, msil, onMsilError, rotation, userCharts }: Props) {
   const el = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
   const layers = useRef<{
     base?: L.TileLayer
     seamarks?: L.TileLayer
     depth?: L.TileLayer[]
+    myCharts?: L.GridLayer
     custom?: L.TileLayer
     ship?: L.Marker
     accuracy?: L.Circle
@@ -181,6 +186,17 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
       l.seamarks = L.tileLayer(SEAMARKS.url, { attribution: SEAMARKS.attribution, maxZoom: 18 }).addTo(m)
     }
   }, [settings.baseLayer, settings.seamarks, settings.customTileUrl, settings.customTileAttribution, settings.gsiDepth])
+
+  // 自分の海図（写真・スキャン）。基準点・画像・濃さが変わったら作り直す
+  const chartsSig = settings.myCharts ? userCharts.map((c) => `${c.id}:${c.points.map((p) => `${p.px},${p.py},${p.lat},${p.lon}`).join(';')}`).join('|') : ''
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    const l = layers.current
+    l.myCharts?.remove()
+    l.myCharts = chartsSig ? chartOverlay(userCharts, settings.myChartsOpacity).addTo(m) : undefined
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chartsSig, settings.myChartsOpacity])
 
   // 自船の位置
   useEffect(() => {

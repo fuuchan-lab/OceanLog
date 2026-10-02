@@ -3176,3 +3176,21 @@ button.compass-on {
   font-size: 0.9rem;
   text-align: left;
 }
+/* 出航地の下の、まわりの海図 */
+.log-list > li:has(.port-charts) {
+  flex-wrap: wrap;
+}
+.port-charts {
+  flex-basis: 100%;
+  padding-left: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.port-charts .log-list {
+  width: 100%;
+}
+.chart-row {
+  font-size: 0.92rem;
+}

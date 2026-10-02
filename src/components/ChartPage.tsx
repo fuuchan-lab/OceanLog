@@ -8,7 +8,6 @@ import { useI18n } from '../i18n/useI18n.ts'
 import type { Profile } from '../profile.ts'
 import type { BaseLayer, Settings } from '../settings.ts'
 import type { Mark, TrackPoint } from '../types.ts'
-import { UserChartView } from './UserChartView.tsx'
 import { MapView } from './MapView.tsx'
 import { CompassRose } from './CompassRose.tsx'
 import { useCompass } from '../hooks/useCompass.ts'
@@ -81,8 +80,6 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
   const headingUp = active !== null && settings.headingUp && compass.heading !== null
   const at = fix ?? profile.ports[0] ?? { lat: 35, lon: 139 }
   const rotation = headingUp && compass.heading !== null ? -trueHeading(compass.heading, at) : 0
-  // 自分の海図（写真・スキャン）を表示している時は、その海図の上に自船を出す（位置合わせが済んだものだけ）
-  const userChart = settings.userChartId ? (profile.charts.find((c) => c.id === settings.userChartId) ?? null) : null
 
   const nearestPort = fix
     ? [...profile.ports].sort((a, b) => distance(fix, a) - distance(fix, b))[0]
@@ -105,44 +102,27 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
   return (
     <div className="chart-page">
       <div className="map-wrap">
-        {userChart ? (
-          <UserChartView
-            chart={userChart}
-            fix={fix}
-            follow={follow}
-            onUserMove={() => setFollow(false)}
-            livePoints={log.livePoints}
-            shownTrack={shownTrack}
-            marks={log.marks}
-            ports={profile.ports}
-            focus={focusNow}
-            onCenter={(c) => {
-              setCenter(c)
-              onMapCenter(c)
-            }}
-          />
-        ) : (
-          <MapView
-            settings={settings}
-            fix={fix}
-            follow={follow}
-            rotation={rotation}
-            onUserMove={() => setFollow(false)}
-            livePoints={log.livePoints}
-            shownTrack={shownTrack}
-            marks={log.marks}
-            ports={profile.ports}
-            focus={focusNow}
-            onMarkClick={(m) => setMarkForm({ draft: { ...m }, edit: m })}
-            onCenter={(c) => {
-              setCenter(c)
-              onMapCenter(c)
-            }}
-            hazards={hazards}
-            msil={msil}
-            onMsilError={() => setMsilError(true)}
-          />
-        )}
+        <MapView
+          settings={settings}
+          fix={fix}
+          follow={follow}
+          rotation={rotation}
+          onUserMove={() => setFollow(false)}
+          livePoints={log.livePoints}
+          shownTrack={shownTrack}
+          marks={log.marks}
+          ports={profile.ports}
+          focus={focusNow}
+          onMarkClick={(m) => setMarkForm({ draft: { ...m }, edit: m })}
+          onCenter={(c) => {
+            setCenter(c)
+            onMapCenter(c)
+          }}
+          hazards={hazards}
+          msil={msil}
+          onMsilError={() => setMsilError(true)}
+          userCharts={profile.charts}
+        />
         {/* 地図の上に、位置・速力・針路 */}
         <div className="hud">
           {fix ? (
@@ -184,7 +164,7 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
               🏠
             </button>
           )}
-          {active !== null && !userChart && (
+          {active !== null && (
             <button
               className={`fab${settings.headingUp ? ' on' : ''}`}
               onClick={() => onSettings({ ...settings, headingUp: !settings.headingUp })}
@@ -202,20 +182,23 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
           <div className="layers-panel">
             {profile.charts.length > 0 && (
               <>
-                <p className="small legend-line">
-                  <b>{t('uchart.show')}</b>
-                </p>
                 <label className="check">
-                  <input type="radio" name="chart-source" checked={!userChart} onChange={() => onSettings({ ...settings, userChartId: null })} />
-                  {t('uchart.mapOption')}
+                  <input type="checkbox" checked={settings.myCharts} onChange={(e) => onSettings({ ...settings, myCharts: e.target.checked })} />
+                  🗺️ {t('uchart.overlay', { n: profile.charts.length })}
                 </label>
-                {profile.charts.map((c) => (
-                  <label key={c.id} className="check">
-                    <input type="radio" name="chart-source" checked={userChart?.id === c.id} onChange={() => onSettings({ ...settings, userChartId: c.id })} />
-                    🗺️ {c.name}
+                {settings.myCharts && (
+                  <label className="small">
+                    {t('uchart.opacity', { v: Math.round(settings.myChartsOpacity * 100) })}
+                    <input
+                      type="range"
+                      min={30}
+                      max={100}
+                      step={5}
+                      value={Math.round(settings.myChartsOpacity * 100)}
+                      onChange={(e) => onSettings({ ...settings, myChartsOpacity: Number(e.target.value) / 100 })}
+                    />
                   </label>
-                ))}
-                {userChart && <p className="muted small">{t('uchart.northNote')}</p>}
+                )}
                 <hr />
               </>
             )}

@@ -15,8 +15,10 @@ export interface Settings {
   headingUp: boolean
   /** 国土地理院の沿岸海域土地条件図（等深線）を重ねる */
   gsiDepth: boolean
-  /** 航行の画面に、地図の代わりに表示する自分の海図（UserChart の ID）。null なら地図 */
-  userChartId: string | null
+  /** 自分で撮影・アップロードした海図を、地図に重ねる */
+  myCharts: boolean
+  /** 自分の海図の濃さ（0.3〜1） */
+  myChartsOpacity: number
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -27,7 +29,8 @@ export const DEFAULT_SETTINGS: Settings = {
   customTileAttribution: '',
   headingUp: true,
   gsiDepth: false,
-  userChartId: null,
+  myCharts: true,
+  myChartsOpacity: 1,
 }
 
 export const SETTINGS_KEY = 'oceanlog-settings'
@@ -52,7 +55,8 @@ export function settingsFrom(value: unknown): Settings {
     customTileAttribution: typeof v.customTileAttribution === 'string' ? v.customTileAttribution : '',
     headingUp: v.headingUp !== false,
     gsiDepth: v.gsiDepth === true,
-    userChartId: typeof v.userChartId === 'string' ? v.userChartId : null,
+    myCharts: v.myCharts !== false,
+    myChartsOpacity: typeof v.myChartsOpacity === 'number' && v.myChartsOpacity >= 0.3 && v.myChartsOpacity <= 1 ? v.myChartsOpacity : 1,
   }
 }
 

@@ -14,7 +14,7 @@ import { DriveProgress, driveSettled, SyncNowButton } from './SyncFeedback.tsx'
 import { MapPicker } from './MapPicker.tsx'
 import { SliderField } from './SliderField.tsx'
 import { ChartEditor } from './ChartEditor.tsx'
-import { fitChart, type UserChart } from '../chartGeo.ts'
+import { chartCorners, fitChart, polygonContains, type UserChart } from '../chartGeo.ts'
 import { deletePhoto } from '../db.ts'
 import { MsilSettingsCard } from './MsilSettingsCard.tsx'
 import type { MsilSettings } from '../msil.ts'
@@ -155,7 +155,29 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
   const { t, lang } = useI18n()
   const [editing, setEditing] = useState<{ port: HomePort; isNew: boolean } | null>(null)
   // 自分の海図の登録・位置合わせ（新しく登録する時は 'new'）
-  const [chartEditing, setChartEditing] = useState<UserChart | 'new' | null>(null)
+  const [chartEditing, setChartEditing] = useState<{ chart: UserChart | null; port: HomePort | null } | null>(null)
+  // 出航地ごとの海図: その出航地から追加した海図と、出航地を含む範囲の海図
+  const placed = profile.charts.map((c) => {
+    const fit = fitChart(c.points)
+    return { chart: c, fit, corners: fit ? chartCorners(c, fit) : null }
+  })
+  const chartsFor = (port: HomePort) => placed.filter((x) => x.chart.portId === port.id || (x.chart.portId === null && x.corners !== null && polygonContains(x.corners, port)))
+  const otherCharts = placed.filter((x) => !profile.ports.some((p) => chartsFor(p).includes(x)))
+  const chartRow = (x: (typeof placed)[number], port: HomePort | null) => (
+    <li key={x.chart.id} className="chart-row">
+      <span>
+        🗺️ <b>{x.chart.name || t('uchart.title')}</b>
+        <br />
+        <span className="small muted">
+          {t('uchart.points', { n: x.chart.points.length })} ·{' '}
+          {x.fit ? t('uchart.accuracy', { m: Math.max(1, Math.round(x.fit.expected ?? x.fit.rms)) }) : t('uchart.notFitted')}
+        </span>
+      </span>
+      <button className="link" onClick={() => setChartEditing({ chart: x.chart, port })}>
+        {t('common.edit')}
+      </button>
+    </li>
+  )
   const [tileUrl, setTileUrl] = useState(settings.customTileUrl)
   const [tileAttr, setTileAttr] = useState(settings.customTileAttribution)
   // 別の端末の設定をドライブから読み込んだ時は、入力欄も合わせる
@@ -252,9 +274,17 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
               <button className="link" onClick={() => setEditing({ port: p, isNew: false })}>
                 {t('common.edit')}
               </button>
+              {/* この出航地のまわりの海図（写真・スキャン） */}
+              <div className="port-charts">
+                {chartsFor(p).length > 0 && <ul className="log-list">{chartsFor(p).map((x) => chartRow(x, p))}</ul>}
+                <button className="link" onClick={() => setChartEditing({ chart: null, port: p })}>
+                  ＋ {t('uchart.addForPort', { name: p.name })}
+                </button>
+              </div>
             </li>
           ))}
         </ul>
+        <p className="muted small">{t('uchart.lead')}</p>
         <button
           className="secondary"
           onClick={() =>
@@ -280,31 +310,11 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
         <p className="muted small">{t('settings.unitsHint')}</p>
       </section>
 
+      {/* 出航地に結びつかない海図（出航地から離れた場所の海図など） */}
       <section className="card">
         <h2>🗺️ {t('uchart.title')}</h2>
-        <p className="muted small">{t('uchart.lead')}</p>
-        {profile.charts.length > 0 && (
-          <ul className="log-list">
-            {profile.charts.map((c) => {
-              const fit = fitChart(c.points)
-              return (
-                <li key={c.id}>
-                  <span>
-                    <b>{c.name || t('uchart.title')}</b>
-                    <br />
-                    <span className="small muted">
-                      {t('uchart.points', { n: c.points.length })} · {fit ? t('uchart.accuracy', { m: Math.max(1, Math.round(fit.rms)) }) : t('uchart.notFitted')}
-                    </span>
-                  </span>
-                  <button className="link" onClick={() => setChartEditing(c)}>
-                    {t('common.edit')}
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-        <button className="secondary" onClick={() => setChartEditing('new')}>
+        {otherCharts.length > 0 ? <ul className="log-list">{otherCharts.map((x) => chartRow(x, null))}</ul> : <p className="muted small">{t('uchart.otherLead')}</p>}
+        <button className="secondary" onClick={() => setChartEditing({ chart: null, port: null })}>
           ＋ {t('uchart.add')}
         </button>
       </section>
@@ -414,23 +424,23 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
 
       {chartEditing && (
         <ChartEditor
-          initial={chartEditing === 'new' ? null : chartEditing}
+          initial={chartEditing.chart}
           here={here}
+          port={chartEditing.port}
           onClose={() => setChartEditing(null)}
           onSave={(c) => {
             onProfile((p) => ({ ...p, charts: p.charts.some((x) => x.id === c.id) ? p.charts.map((x) => (x.id === c.id ? c : x)) : [...p.charts, c] }))
-            // 初めて登録した海図は、航行の画面ですぐ使えるように選んでおく
-            if (chartEditing === 'new') onSettings({ ...settings, userChartId: c.id })
+            // 海図を登録したら、地図に重ねる設定にしておく
+            if (!settings.myCharts) onSettings({ ...settings, myCharts: true })
             setChartEditing(null)
           }}
           onDelete={
-            chartEditing === 'new'
+            chartEditing.chart === null
               ? undefined
               : () => {
-                  const target = chartEditing
+                  const target = chartEditing.chart!
                   if (!confirm(t('uchart.deleteConfirm', { name: target.name }))) return
                   onProfile((p) => ({ ...p, charts: p.charts.filter((x) => x.id !== target.id) }))
-                  if (settings.userChartId === target.id) onSettings({ ...settings, userChartId: null })
                   void deletePhoto(target.id)
                   setChartEditing(null)
                 }
