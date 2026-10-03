@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
-import { CURVED_MIN_POINTS, fitChart, MIN_POINTS, pointsCoverage, RECOMMENDED_POINTS, type ControlPoint, type UserChart } from '../chartGeo.ts'
+import { fitChart, MIN_POINTS, pointsCoverage, RECOMMENDED_POINTS, type ControlPoint, type UserChart } from '../chartGeo.ts'
+import { ChartCheckMap } from './ChartCheckMap.tsx'
 import { deletePhoto, putPhoto } from '../db.ts'
 import { newId } from '../device.ts'
 import { formatPosition, parseCoord, type LatLon } from '../geo.ts'
@@ -42,7 +43,9 @@ export function ChartEditor({ initial, here, port, onSave, onDelete, onClose }: 
   const [busy, setBusy] = useState(false)
   const pz = useRef<PanZoomHandle>(null)
   const url = usePhotoUrl(chart?.id ?? null)
-  const tr = useMemo(() => (chart ? fitChart(chart.points) : null), [chart])
+  const tr = useMemo(() => (chart ? fitChart(chart.points, chart) : null), [chart])
+  // 'check': 地図に重ねて、合っているかを見る（保存した後に自動で開く）
+  const [mode, setMode] = useState<'points' | 'check'>('points')
   // 新しく撮った写真（保存せずに閉じたら消す）
   const fresh = useRef<string | null>(null)
 
@@ -107,7 +110,25 @@ export function ChartEditor({ initial, here, port, onSave, onDelete, onClose }: 
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('uchart.namePlaceholder')} />
         </label>
 
-        {!chart ? (
+        {chart && mode === 'check' && (
+          <>
+            <p className="small">
+              <b>{t('uchart.checkTitle')}</b>
+            </p>
+            <ChartCheckMap chart={{ ...chart, name }} />
+            {tr && <p className="small">{t('uchart.fitExpected', { m: Math.max(1, Math.round(tr.rms)) })}</p>}
+            <div className="row gap">
+              <button type="button" className="secondary" onClick={() => setMode('points')}>
+                ✏️ {t('uchart.fixPoints')}
+              </button>
+              <button type="button" className="primary" onClick={onClose}>
+                ✓ {t('uchart.done')}
+              </button>
+            </div>
+          </>
+        )}
+
+        {mode === 'check' ? null : !chart ? (
           <>
             <p className="muted small">{t('uchart.photoLead')}</p>
             {busy ? <p className="muted">{t('common.loading')}</p> : <PhotoCapture document maxSide={CHART_MAX_SIDE} label={t('uchart.takePhoto')} onPhoto={(b) => void onPhoto(b)} />}
@@ -223,22 +244,33 @@ export function ChartEditor({ initial, here, port, onSave, onDelete, onClose }: 
             </p>
             {tr && chart.points.length < RECOMMENDED_POINTS && <p className="muted small">{t('uchart.moreBetter', { r: RECOMMENDED_POINTS })}</p>}
             {tr && chart.points.length >= MIN_POINTS && pointsCoverage(chart, chart.points) < 0.35 && <p className="caution-text small">{t('uchart.spread')}</p>}
-            {tr && <p className="muted small">{t(tr.kind === 'curved' ? 'uchart.curvedOn' : 'uchart.curvedOff', { n: CURVED_MIN_POINTS })}</p>}
+            {tr && <p className="muted small">{t(`uchart.kind.${tr.kind}`)}</p>}
           </>
         )}
 
-        <button
-          type="button"
-          className="primary"
-          disabled={!canSave}
-          onClick={() => {
-            if (!chart) return
-            fresh.current = null
-            onSave({ ...chart, name: name.trim() })
-          }}
-        >
-          {t('common.save')}
-        </button>
+        {mode === 'points' && (
+          <div className="row gap">
+            {tr && (
+              <button type="button" className="secondary" onClick={() => setMode('check')}>
+                🗺️ {t('uchart.check')}
+              </button>
+            )}
+            <button
+              type="button"
+              className="primary"
+              disabled={!canSave}
+              onClick={() => {
+                if (!chart) return
+                fresh.current = null
+                onSave({ ...chart, name: name.trim() })
+                // 保存したら、すぐに地図に重ねて確かめる
+                setMode('check')
+              }}
+            >
+              {t('common.save')}
+            </button>
+          </div>
+        )}
         {onDelete && (
           <button type="button" className="danger-btn" onClick={onDelete}>
             {t('common.delete')}

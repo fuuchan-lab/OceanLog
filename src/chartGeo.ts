@@ -1,7 +1,7 @@
 /**
  * 自分で撮影・アップロードした海図の、画像の位置（画素）と緯度経度の対応（ジオリファレンス）。
  * 海図はメルカトル図法なので、緯度経度をメルカトルの座標にしてから、画像の画素へ移す変換を求める。
- * 基準点が4つ以上で射影変換（写真の傾き・遠近のゆがみも直す）、8つ以上ならさらに薄板スプラインの補正（レンズのゆがみ・紙のたわみ）。最小二乗で合わせる
+ * 変形の方法（回転・拡大縮小 / アフィン / 射影 / 曲がりの補正）は、基準点の数に応じて交差検証で選ぶ。最小二乗で合わせる
  */
 import type { LatLon } from './geo.ts'
 
@@ -82,20 +82,20 @@ function leastSquares(rows: number[][], values: number[]): number[] | null {
 export interface ChartTransform {
   toPixel: (p: LatLon) => { x: number; y: number }
   toLatLon: (x: number, y: number) => LatLon
-  /** 各基準点のずれ（m）。5点以上は、その点を外して合わせ直した時のずれ（入力の間違いが分かる） */
+  /** 各基準点のずれ（m）。その点を外して合わせ直した時のずれ（入力の間違いが分かる） */
   errors: number[]
   /** ずれの平均（m） */
   rms: number
   /**
    * 見込みの精度（m）: 基準点を1つずつ外して合わせ直し、外した点がどれだけずれるか（交差検証）の平均。
-   * 基準点の上だけでなく、海図全体での確かさの目安。基準点が少なくて求められなければ null
+   * 基準点の上だけでなく、海図全体での確かさの目安
    */
   expected: number | null
-  kind: 'projective' | 'curved'
+  kind: ModelKind
 }
 
-/** 曲がりの補正（レンズのゆがみ・紙のたわみ）を加える、基準点の数 */
-export const CURVED_MIN_POINTS = 8
+/** 曲がりの補正（レンズのゆがみ・紙のたわみ）を試す、基準点の数 */
+export const CURVED_MIN_POINTS = 10
 /** 基準点のおすすめの数 */
 export const RECOMMENDED_POINTS = 6
 
@@ -146,16 +146,33 @@ function tps(ps: Pt[], vs: number[], smooth = 1e-3): ((p: Pt) => number) | null 
   }
 }
 
+/** 変形の方法（下ほど自由度が高い）。自由度が高いほど基準点にぴったり合うが、点の入力のずれで海図全体がゆがみやすい */
+export type ModelKind = 'similarity' | 'affine' | 'projective' | 'curved'
+
+/** それぞれの変形を試す、基準点の数（交差検証で確かめられる数） */
+const KIND_MIN_POINTS: Record<ModelKind, number> = { similarity: 2, affine: 3, projective: 6, curved: 10 }
+const KINDS: ModelKind[] = ['similarity', 'affine', 'projective', 'curved']
+/** それぞれの変形が解ける、最小の基準点の数 */
+const SOLVE_MIN_POINTS: Record<ModelKind, number> = { similarity: 2, affine: 3, projective: 4, curved: 5 }
+
 /**
- * 基準点から、緯度経度（メルカトル座標）→ 画像の画素 の変換を求める（ずれの計算はしない）。
- * 4点以上は射影変換（写真の傾き・遠近のゆがみ）。8点以上なら、残ったずれを薄板スプラインで直す（レンズのゆがみ・紙のたわみ）
+ * 基準点から、緯度経度（メルカトル座標）→ 画像の画素 の変換を、指定した方法で求める（ずれの計算はしない）。
+ * - similarity: 回転・拡大縮小・平行移動（四隅を合わせて補正した写真なら、これで十分なことが多い）
+ * - affine: さらに縦横の伸び・斜めのゆがみ
+ * - projective: さらに遠近のゆがみ
+ * - curved: 射影変換の後、残ったずれを薄板スプラインで直す（レンズのゆがみ・紙のたわみ）
  */
-function fitModel(points: ControlPoint[], allowCurved = true): Pick<ChartTransform, 'toPixel' | 'toLatLon' | 'kind'> | null {
-  if (points.length < MIN_POINTS) return null
-  const ns = normOf(points.map((p) => mercator(p)))
+function fitModel(points: ControlPoint[], kind: ModelKind): Pick<ChartTransform, 'toPixel' | 'toLatLon' | 'kind'> | null {
+  if (points.length < SOLVE_MIN_POINTS[kind]) return null
+  // 画像は下向きが +y、メルカトルは北が +y なので、上下をそろえる（回転・拡大縮小だけで表せるように）
+  const src = (p: LatLon) => {
+    const m = mercator(p)
+    return { x: m.x, y: -m.y }
+  }
+  const ns = normOf(points.map(src))
   const nd = normOf(points.map((p) => ({ x: p.px, y: p.py })))
   const s = points.map((p) => {
-    const m = mercator(p)
+    const m = src(p)
     return { x: (m.x - ns.cx) / ns.sc, y: (m.y - ns.cy) / ns.sc }
   })
   const d = points.map((p) => ({ x: (p.px - nd.cx) / nd.sc, y: (p.py - nd.cy) / nd.sc }))
@@ -170,49 +187,67 @@ function fitModel(points: ControlPoint[], allowCurved = true): Pick<ChartTransfo
   const major = sum / 2 + disc
   if (major <= 0 || Math.sqrt(Math.max(0, minor) / major) < MIN_SPREAD) return null
 
-  // 射影変換 h: 正規化したメルカトル座標 → 正規化した画素（h[8] = 1）
+  // h: 正規化した座標 → 正規化した画素（3x3、h[8] = 1）
   const rows: number[][] = []
   const vals: number[] = []
-  s.forEach((p, i) => {
-    rows.push([p.x, p.y, 1, 0, 0, 0, -d[i].x * p.x, -d[i].x * p.y])
-    vals.push(d[i].x)
-    rows.push([0, 0, 0, p.x, p.y, 1, -d[i].y * p.x, -d[i].y * p.y])
-    vals.push(d[i].y)
-  })
-  const r = leastSquares(rows, vals)
-  if (!r) return null
-  const h = [...r, 1]
-  if (h.some((v) => !Number.isFinite(v))) return null
-  const inv = invert3(h)
+  let h: number[] | null = null
+  if (kind === 'similarity') {
+    s.forEach((p, i) => {
+      rows.push([p.x, -p.y, 1, 0])
+      vals.push(d[i].x)
+      rows.push([p.y, p.x, 0, 1])
+      vals.push(d[i].y)
+    })
+    const r = leastSquares(rows, vals)
+    if (r) h = [r[0], -r[1], r[2], r[1], r[0], r[3], 0, 0, 1]
+  } else if (kind === 'affine') {
+    s.forEach((p, i) => {
+      rows.push([p.x, p.y, 1, 0, 0, 0])
+      vals.push(d[i].x)
+      rows.push([0, 0, 0, p.x, p.y, 1])
+      vals.push(d[i].y)
+    })
+    const r = leastSquares(rows, vals)
+    if (r) h = [...r, 0, 0, 1]
+  } else {
+    s.forEach((p, i) => {
+      rows.push([p.x, p.y, 1, 0, 0, 0, -d[i].x * p.x, -d[i].x * p.y])
+      vals.push(d[i].x)
+      rows.push([0, 0, 0, p.x, p.y, 1, -d[i].y * p.x, -d[i].y * p.y])
+      vals.push(d[i].y)
+    })
+    const r = leastSquares(rows, vals)
+    if (r) h = [...r, 1]
+  }
+  if (!h || h.some((v) => !Number.isFinite(v))) return null
+  const H = h
+  const inv = invert3(H)
   if (!inv) return null
 
-  // 多いとき: 射影変換で残ったずれを、薄板スプライン（TPS）でなめらかに直す（レンズのゆがみ・紙のたわみ・写真の曲がり）
+  // 曲がりの補正: 射影変換で残ったずれを、薄板スプライン（TPS）でなめらかに直す
   let corr: (p: Pt) => Pt = () => ({ x: 0, y: 0 })
-  let curved = false
-  if (allowCurved && points.length >= CURVED_MIN_POINTS) {
-    const q = s.map((p) => applyH(h, p.x, p.y))
+  const curved = kind === 'curved'
+  if (curved) {
+    const q = s.map((p) => applyH(H, p.x, p.y))
     const tx = tps(q, q.map((p, i) => d[i].x - p.x))
     const ty = tps(q, q.map((p, i) => d[i].y - p.y))
-    if (tx && ty) {
-      corr = (p) => ({ x: tx(p), y: ty(p) })
-      curved = true
-    }
+    if (!tx || !ty) return null
+    corr = (p) => ({ x: tx(p), y: ty(p) })
   }
 
   const toPixel = (p: LatLon) => {
-    const mc = mercator(p)
-    const q = applyH(h, (mc.x - ns.cx) / ns.sc, (mc.y - ns.cy) / ns.sc)
+    const m = src(p)
+    const q = applyH(H, (m.x - ns.cx) / ns.sc, (m.y - ns.cy) / ns.sc)
     const c = corr(q)
     return { x: (q.x + c.x) * nd.sc + nd.cx, y: (q.y + c.y) * nd.sc + nd.cy }
   }
   const toLatLon = (x: number, y: number) => {
-    // まず射影変換だけで戻す
     const t = { x: (x - nd.cx) / nd.sc, y: (y - nd.cy) / nd.sc }
     let m = applyH(inv, t.x, t.y)
-    // 曲がりの補正がある時は、ニュートン法で toPixel(緯度経度) = (x, y) になるよう直す（正規化したメルカトル座標で）
+    // 曲がりの補正がある時は、ニュートン法で toPixel(緯度経度) = (x, y) になるよう直す（正規化した座標で）
     if (curved) {
       const fwd = (u: Pt) => {
-        const q = applyH(h, u.x, u.y)
+        const q = applyH(H, u.x, u.y)
         const c = corr(q)
         return { x: q.x + c.x, y: q.y + c.y }
       }
@@ -233,37 +268,68 @@ function fitModel(points: ControlPoint[], allowCurved = true): Pick<ChartTransfo
         m = { x: m.x - (d2 * rx - b * ry) / det, y: m.y - (-c * rx + a * ry) / det }
       }
     }
-    return inverseMercator(m.x * ns.sc + ns.cx, m.y * ns.sc + ns.cy)
+    return inverseMercator(m.x * ns.sc + ns.cx, -(m.y * ns.sc + ns.cy))
   }
-  return { toPixel, toLatLon, kind: curved ? 'curved' : 'projective' }
+  return { toPixel, toLatLon, kind }
+}
+
+/** 交差検証: 1つずつ外して合わせ直し、外した点のずれ (m)。どれかで合わせられなければ null */
+function leaveOneOut(points: ControlPoint[], kind: ModelKind): number[] | null {
+  const out: number[] = []
+  for (let i = 0; i < points.length; i++) {
+    const m = fitModel(
+      points.filter((_, k) => k !== i),
+      kind,
+    )
+    if (!m) return null
+    out.push(groundDistance(m.toLatLon(points[i].px, points[i].py), points[i]))
+  }
+  return out
+}
+
+const rmsOf = (v: number[]) => Math.sqrt(v.reduce((t, e) => t + e * e, 0) / v.length)
+
+/** 海図の四隅が、ねじれずに（凸の四角形で）地図に乗るか。極端な遠近のゆがみを防ぐ */
+function sane(model: Pick<ChartTransform, 'toLatLon'>, size: { width: number; height: number }): boolean {
+  const c = chartCorners(size, model).map((p) => ({ x: p.lon * Math.cos((p.lat * Math.PI) / 180), y: p.lat }))
+  if (c.some((p) => !Number.isFinite(p.x) || !Number.isFinite(p.y))) return false
+  let sign = 0
+  for (let i = 0; i < 4; i++) {
+    const a = c[i]
+    const b = c[(i + 1) % 4]
+    const e = c[(i + 2) % 4]
+    const cr = (b.x - a.x) * (e.y - b.y) - (b.y - a.y) * (e.x - b.x)
+    if (cr === 0) return false
+    if (sign === 0) sign = Math.sign(cr)
+    else if (Math.sign(cr) !== sign) return false
+  }
+  // 向かい合う辺の長さが極端に違う（遠近が強すぎる）ものは使わない
+  const len = (i: number) => Math.hypot(c[(i + 1) % 4].x - c[i].x, c[(i + 1) % 4].y - c[i].y)
+  return len(0) / len(2) < 2.5 && len(2) / len(0) < 2.5 && len(1) / len(3) < 2.5 && len(3) / len(1) < 2.5
 }
 
 /**
- * 基準点から変換を求め、ずれと見込みの精度も出す。
- * 4点未満や、点が一直線に並ぶなどで解けなければ null
+ * 基準点から変換を求め、点ごとのずれと見込みの精度も出す。
+ * 基準点の数に応じて、使える変形の方法を交差検証で比べ、いちばんよく当たるもの（同じくらいなら単純なもの）を選ぶ。
+ * 自由度の高い方法は、点が十分にあり、はっきりよく当たる時だけ使う（少ない点で無理に合わせると、海図全体がゆがむため）。
+ * size（海図の画像の大きさ）を渡すと、四隅がねじれる変形は使わない。4点未満や、点が一直線に並ぶなどで解けなければ null
  */
-export function fitChart(points: ControlPoint[], allowCurved = true): ChartTransform | null {
-  const model = fitModel(points, allowCurved)
-  if (!model) return null
-  // 合わせた結果のずれ: 画像の上の基準点を緯度経度に戻し、入力した緯度経度との距離
-  const fitErrors = points.map((p) => groundDistance(model.toLatLon(p.px, p.py), p))
-  // 見込みの精度: 1つずつ外して合わせ直し、外した点のずれを測る（外しても合わせられる数がある時だけ）。
-  // 曲がりの補正は基準点にぴったり合わせるので、点ごとの「ずれ」もこちらで出す（入力を間違えた点が目立つ）
-  let expected: number | null = null
-  let errors = fitErrors
-  if (points.length > MIN_POINTS) {
-    const loo: number[] = []
-    points.forEach((p, i) => {
-      const m = fitModel(points.filter((_, k) => k !== i), allowCurved)
-      if (m) loo.push(groundDistance(m.toLatLon(p.px, p.py), p))
-    })
-    if (loo.length === points.length) {
-      expected = Math.sqrt(loo.reduce((t, e) => t + e * e, 0) / loo.length)
-      errors = loo
-    }
+export function fitChart(points: ControlPoint[], size?: { width: number; height: number }, maxKind: ModelKind = 'curved'): ChartTransform | null {
+  if (points.length < MIN_POINTS) return null
+  let best: { model: Pick<ChartTransform, 'toPixel' | 'toLatLon' | 'kind'>; loo: number[]; score: number } | null = null
+  for (const kind of KINDS.slice(0, KINDS.indexOf(maxKind) + 1)) {
+    if (points.length < KIND_MIN_POINTS[kind]) continue
+    const model = fitModel(points, kind)
+    if (!model) continue
+    if (size && kind !== 'similarity' && !sane(model, size)) continue
+    const loo = leaveOneOut(points, kind)
+    if (!loo) continue
+    const score = rmsOf(loo)
+    // 自由度の高い方法は、1割以上よく当たる時だけ選ぶ
+    if (!best || score < best.score * 0.9) best = { model, loo, score }
   }
-  const rms = Math.sqrt(errors.reduce((sum, e) => sum + e * e, 0) / errors.length)
-  return { ...model, errors, rms, expected }
+  if (!best) return null
+  return { ...best.model, errors: best.loo, rms: best.score, expected: best.score }
 }
 
 /** 海図の四隅の緯度経度（地図に重ねる範囲・優先の判定に使う） */

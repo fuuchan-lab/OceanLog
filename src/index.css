@@ -3194,3 +3194,29 @@ button.compass-on {
 .chart-row {
   font-size: 0.92rem;
 }
+
+/* 位置合わせの確認の地図 */
+.check-map-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.check-map {
+  height: min(55dvh, 460px);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  isolation: isolate;
+}
+.check-cp span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ff1f1f;
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  border: 2px solid #fff;
+  box-shadow: 0 0 3px rgb(0 0 0 / 0.6);
+}

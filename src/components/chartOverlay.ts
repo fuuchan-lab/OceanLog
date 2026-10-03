@@ -25,7 +25,7 @@ const MESH = 8
 export function chartOverlay(charts: UserChart[], opacity: number): L.GridLayer {
   const placed: Placed[] = charts
     .flatMap((chart): Placed[] => {
-      const tr = fitChart(chart.points)
+      const tr = fitChart(chart.points, chart)
       if (!tr) return []
       const corners = chartCorners(chart, tr)
       return [{ chart, tr, corners, bounds: L.latLngBounds(corners.map((c) => [c.lat, c.lon])), area: polygonAreaKm2(corners), image: null }]

@@ -158,7 +158,7 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
   const [chartEditing, setChartEditing] = useState<{ chart: UserChart | null; port: HomePort | null } | null>(null)
   // 出航地ごとの海図: その出航地から追加した海図と、出航地を含む範囲の海図
   const placed = profile.charts.map((c) => {
-    const fit = fitChart(c.points)
+    const fit = fitChart(c.points, c)
     return { chart: c, fit, corners: fit ? chartCorners(c, fit) : null }
   })
   const chartsFor = (port: HomePort) => placed.filter((x) => x.chart.portId === port.id || (x.chart.portId === null && x.corners !== null && polygonContains(x.corners, port)))
@@ -430,9 +430,8 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
           onClose={() => setChartEditing(null)}
           onSave={(c) => {
             onProfile((p) => ({ ...p, charts: p.charts.some((x) => x.id === c.id) ? p.charts.map((x) => (x.id === c.id ? c : x)) : [...p.charts, c] }))
-            // 海図を登録したら、地図に重ねる設定にしておく
+            // 海図を登録したら、地図に重ねる設定にしておく（編集の画面は、重ね合わせの確認に進む）
             if (!settings.myCharts) onSettings({ ...settings, myCharts: true })
-            setChartEditing(null)
           }}
           onDelete={
             chartEditing.chart === null
