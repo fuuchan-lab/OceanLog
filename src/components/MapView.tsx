@@ -15,6 +15,24 @@ import type { MsilSettings } from '../msil.ts'
 import { msilLayer } from './msilLayer.ts'
 import { chartOverlay } from './chartOverlay.ts'
 import type { UserChart } from '../chartGeo.ts'
+import type { VesselKind } from '../vessels.ts'
+
+/** 地図に出す周りの船（AIS）。位置は推定済み、文言は翻訳済みで受け取る */
+export interface VesselMarker {
+  id: number
+  lat: number
+  lon: number
+  /** 向き（度、真方位）。分からなければ null */
+  heading: number | null
+  kind: VesselKind
+  moving: boolean
+  /** 近づいてくる船（最接近が近い） */
+  warn: boolean
+  /** 地図の上の名前（短く） */
+  name: string
+  /** タップした時の説明（複数行） */
+  detail: string[]
+}
 
 interface Props {
   settings: Settings
@@ -41,6 +59,8 @@ interface Props {
   rotation: number
   /** 自分で撮影・アップロードした海図（位置合わせ済みのものを重ねる） */
   userCharts: UserChart[]
+  /** 周りの船（AIS） */
+  vessels: VesselMarker[]
 }
 
 type RotatableMap = L.Map & { setBearing: (deg: number) => void; getBearing: () => number }
@@ -78,6 +98,20 @@ export const hazardIcon = (kind: Hazard['kind'], level: WaterLevel, mine = false
     html: `<svg viewBox="0 0 32 32">${hazardSvg(kind, level)}</svg>`,
   })
 
+/** 周りの船: 上から見た船の形を、向いている方向に回す。向きが分からなければ菱形 */
+const vesselIcon = (kind: VesselKind, moving: boolean, warn: boolean, course: number | null) =>
+  L.divIcon({
+    className: `vessel-icon vessel-${kind}${moving ? '' : ' vessel-moored'}${warn ? ' vessel-warn' : ''}`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+    html:
+      course === null
+        ? '<svg viewBox="0 0 26 26"><path d="M13 5 21 13 13 21 5 13z" class="vessel-body"/></svg>'
+        : `<svg viewBox="0 0 26 26" style="transform:rotate(${course}deg)">${warn ? '<circle cx="13" cy="13" r="12" class="vessel-ring"/>' : ''}<path d="M13 2C16 5 17.5 9 17.5 14V23H8.5V14C8.5 9 10 5 13 2z" class="vessel-body"/></svg>`,
+  })
+
+const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
+
 const markIcon = (emoji: string, cls = '') =>
   L.divIcon({ className: `mark-icon ${cls}`, iconSize: [30, 30], iconAnchor: [15, 28], html: `<span>${emoji}</span>` })
 
@@ -105,7 +139,7 @@ function trackLayer(points: TrackPoint[], cls: string): L.LayerGroup {
 }
 
 /** Leaflet の地図（海図）。React からは、表示する中身を渡すだけにする */
-export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTrack, marks, ports, focus, onMarkClick, onCenter, hazards, msil, onMsilError, rotation, userCharts }: Props) {
+export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTrack, marks, ports, focus, onMarkClick, onCenter, hazards, msil, onMsilError, rotation, userCharts, vessels }: Props) {
   const el = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
   const layers = useRef<{
@@ -122,6 +156,8 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
     ports?: L.LayerGroup
     hazards?: L.LayerGroup
     msil?: L.TileLayer[]
+    vessels?: L.LayerGroup
+    vesselMarkers?: Map<number, { marker: L.Marker; sig: string }>
   }>({})
   const cb = useRef({ onUserMove, onMarkClick, onCenter, onMsilError })
   useEffect(() => {
@@ -294,6 +330,39 @@ export function MapView({ settings, fix, follow, onUserMove, livePoints, shownTr
       ),
     ).addTo(m)
   }, [hazards])
+
+  // 周りの船（AIS）。毎回作り直すと開いている説明が閉じるので、船ごとに位置と絵だけ更新する
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    const l = layers.current
+    if (!l.vessels) l.vessels = L.layerGroup().addTo(m)
+    const shown = (l.vesselMarkers ??= new Map())
+    const keep = new Set<number>()
+    for (const v of vessels) {
+      keep.add(v.id)
+      const course = shipCourse(v.heading, rotation)
+      const sig = `${v.kind}|${v.moving}|${v.warn}|${course}`
+      const html = `<b>${escapeHtml(v.name)}</b>${v.detail.map((d) => `<br>${escapeHtml(d)}`).join('')}`
+      const cur = shown.get(v.id)
+      if (cur) {
+        cur.marker.setLatLng([v.lat, v.lon])
+        if (cur.sig !== sig) cur.marker.setIcon(vesselIcon(v.kind, v.moving, v.warn, course))
+        cur.marker.setPopupContent(html)
+        cur.sig = sig
+      } else {
+        const marker = L.marker([v.lat, v.lon], { icon: vesselIcon(v.kind, v.moving, v.warn, course), zIndexOffset: v.warn ? 500 : 0, title: v.name })
+          .bindPopup(html, { className: 'vessel-popup', offset: [0, -6], autoPanPaddingTopLeft: [10, 110], autoPanPaddingBottomRight: [60, 20] })
+          .addTo(l.vessels)
+        shown.set(v.id, { marker, sig })
+      }
+    }
+    for (const [id, cur] of shown) {
+      if (keep.has(id)) continue
+      cur.marker.remove()
+      shown.delete(id)
+    }
+  }, [vessels, rotation])
 
   // 出航地
   useEffect(() => {

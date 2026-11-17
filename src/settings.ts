@@ -19,6 +19,8 @@ export interface Settings {
   myCharts: boolean
   /** 自分の海図の濃さ（0.3〜1） */
   myChartsOpacity: number
+  /** 周りの船（AIS）を表示する */
+  vessels: boolean
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -31,6 +33,7 @@ export const DEFAULT_SETTINGS: Settings = {
   gsiDepth: false,
   myCharts: true,
   myChartsOpacity: 1,
+  vessels: true,
 }
 
 export const SETTINGS_KEY = 'oceanlog-settings'
@@ -57,6 +60,7 @@ export function settingsFrom(value: unknown): Settings {
     gsiDepth: v.gsiDepth === true,
     myCharts: v.myCharts !== false,
     myChartsOpacity: typeof v.myChartsOpacity === 'number' && v.myChartsOpacity >= 0.3 && v.myChartsOpacity <= 1 ? v.myChartsOpacity : 1,
+    vessels: v.vessels !== false,
   }
 }
 

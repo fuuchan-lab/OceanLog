@@ -3220,3 +3220,74 @@ button.compass-on {
   border: 2px solid #fff;
   box-shadow: 0 0 3px rgb(0 0 0 / 0.6);
 }
+
+/* 周りの船（AIS）: 船の種類ごとの色。白い縁取りで、どの地図の上でも見えるように */
+.vessel-icon svg {
+  width: 26px;
+  height: 26px;
+  overflow: visible;
+  filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.45));
+}
+
+.vessel-body {
+  fill: var(--vessel, #64748b);
+  stroke: #fff;
+  stroke-width: 1.6;
+}
+
+.vessel-moored .vessel-body {
+  opacity: 0.6;
+}
+
+.vessel-ring {
+  fill: none;
+  stroke: #dc2626;
+  stroke-width: 2.5;
+  stroke-dasharray: 4 3;
+}
+
+.vessel-warn .vessel-body {
+  stroke: #dc2626;
+  stroke-width: 2.2;
+}
+
+.vessel-passenger { --vessel: #0284c7; }
+.vessel-cargo { --vessel: #16a34a; }
+.vessel-tanker { --vessel: #b45309; }
+.vessel-fishing { --vessel: #db2777; }
+.vessel-pleasure { --vessel: #7c3aed; }
+.vessel-service { --vessel: #0d9488; }
+.vessel-fast { --vessel: #ca8a04; }
+.vessel-other { --vessel: #64748b; }
+
+.vessel-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.vessel-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid #fff;
+  border-radius: 2px;
+  background: var(--vessel);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.25);
+  vertical-align: -1px;
+}
+
+.vessel-popup .leaflet-popup-content {
+  margin: 8px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.hud-warn {
+  margin-top: 2px;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: #dc2626;
+  color: #fff;
+  font-weight: 700;
+}

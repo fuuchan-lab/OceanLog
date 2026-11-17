@@ -407,6 +407,12 @@ export function SettingsPage({ auth, sync, unsyncedCount, profile, onProfile: on
             — {t('about.openseamap')}
           </li>
           <li>
+            <a href="https://aisstream.io/" target="_blank" rel="noopener">
+              aisstream.io
+            </a>{' '}
+            — {t('about.ais')}
+          </li>
+          <li>
             <a href="https://www.gebco.net/" target="_blank" rel="noopener">
               GEBCO
             </a>{' '}

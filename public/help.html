@@ -248,6 +248,9 @@
           <p>出港前に、地図の下の <kbd>⬇️ 海図をオフライン用に保存</kbd> で、近辺の地図と海図記号を端末に保存できます。沖で電波がなくても、保存した範囲は表示できます。Wi-Fi のある場所での保存をおすすめします。</p>
           <h3>暗岩・洗岩など</h3>
           <p>自分で記録した暗岩・洗岩と、OpenSeaMap に登録された暗岩・洗岩・干出岩・沈船・障害物を、海図記号に近い形で表示します。日本は登録が少ないため、<strong>表示されていない岩もあります</strong>。</p>
+          <h3>周りの船（AIS）</h3>
+          <p>AIS（船舶自動識別装置）を積んでいる周りの船を、種類ごとの色で、進んでいる向きに表示します。タップすると船名・速力・針路・行先・自船からの距離が出ます。今の速力と針路のままだと 15 分以内に 500m より近づく船は赤い輪で囲み、画面の上に「接近」と出します。<kbd>地図の種類</kbd> で表示を切り替えられます。</p>
+          <p><strong>AIS を積んでいない船（小型のプレジャーボートや水上オートバイの多く）は映りません。</strong>受信局が少ない海域では出ないことや、位置が数分遅れることがあります。目で見る見張りの代わりにはなりません。データは aisstream.io から、作成者の中継サーバーを通して取得しています。</p>
           <h3>自分の海図（写真・スキャン）</h3>
           <p>紙の海図などを撮影・アップロードして、航行の地図に正しい位置で重ねられます。何枚も登録でき、つながって広い範囲を表示します。重なる所は、範囲の狭い（詳しい）海図が上になります。</p>
           <ol>
@@ -415,6 +418,7 @@
             <li><kbd>Map type</kbd> switches GSI maps, aerial photos, OpenStreetMap and GEBCO depth, and overlays OpenSeaMap seamarks.</li>
             <li><kbd>⬇️ Save charts for offline use</kbd> below the map saves the nearby charts before departure.</li>
             <li>Rocks and hazards from your own marks and OpenSeaMap are shown. Coverage in Japan is sparse; <strong>not all rocks are shown</strong>.</li>
+            <li><strong>Nearby vessels (AIS)</strong>: ships with AIS are shown in colors by type, pointing the way they are heading. Tap one for its name, speed, course, destination and distance. Ships that will come within 500 m in the next 15 minutes at the current speeds are circled in red and a warning appears at the top. <strong>Vessels without AIS (most small boats and personal watercraft) are not shown</strong>, coverage is limited and positions may be a few minutes old. Keep a proper lookout. Data from aisstream.io via the author's relay server.</li>
             <li><strong>My charts</strong>: under each home port in <kbd>Settings</kbd>, add photos or scans of nearby paper charts and align at least 4 reference points (6+ recommended). With few points the chart is only rotated/scaled, not bent; perspective (6+) and lens/paper distortion (10+) are corrected only when they clearly fit better. After saving, an overlay check screen lets you compare the chart with the map. Aligned charts are drawn on the Navigate map in the right place, join up to cover a wide area, and the more detailed chart wins where they overlap. Toggle them and set opacity under "Map type". Positions are approximate; chart images stay on your device and your Google Drive.</li>
             <li>The compass shows the magnetic heading of the top of the phone (red) and GPS course over ground (blue). It is affected by magnets, metal and engines.</li>
           </ul>

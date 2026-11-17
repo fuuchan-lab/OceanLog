@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { fmtDuration, fmtNum } from '../format.ts'
 import { distance, formatDM, msToKnots, NM, trueHeading, type LatLon } from '../geo.ts'
 import type { GeoState } from '../hooks/useGeolocation.ts'
@@ -8,7 +8,11 @@ import { useI18n } from '../i18n/useI18n.ts'
 import type { Profile } from '../profile.ts'
 import type { BaseLayer, Settings } from '../settings.ts'
 import type { Mark, TrackPoint } from '../types.ts'
-import { MapView } from './MapView.tsx'
+import { MapView, type VesselMarker } from './MapView.tsx'
+import { useVessels } from '../hooks/useVessels.ts'
+import { closestApproach, isCloseApproach, vesselAt, vesselLabel, type Vessel } from '../vessels.ts'
+import type { Fix } from '../hooks/useGeolocation.ts'
+import type { TFn } from '../i18n/context.ts'
 import { CompassRose } from './CompassRose.tsx'
 import { useCompass } from '../hooks/useCompass.ts'
 import { MarkForm, type MarkDraft } from './MarkForm.tsx'
@@ -59,6 +63,40 @@ function useWakeLock(active: boolean) {
 
 const LAYERS: BaseLayer[] = ['gsi-pale', 'gsi-photo', 'osm', 'gebco']
 
+/** 推定位置が動いて見えるよう、この間隔で描き直す */
+const VESSEL_TICK = 5_000
+
+/** 周りの船を地図の表示用にする（推定位置・自船との距離・最接近） */
+function vesselMarkers(list: Vessel[], fix: Fix | null, now: number, t: TFn): { markers: VesselMarker[]; nearest: { name: string; meters: number; minutes: number } | null } {
+  let nearest: { name: string; meters: number; minutes: number } | null = null
+  const markers = list.map((v): VesselMarker => {
+    const at = vesselAt(v, now)
+    const name = vesselLabel(v)
+    const detail = [
+      [t(`vessel.kind.${v.kind}`), v.length ? `${v.length}m` : ''].filter(Boolean).join(' · '),
+      v.moving
+        ? `${fmtNum(v.sog)} kn · ${v.heading === null ? '—' : String(Math.round(v.heading)).padStart(3, '0')}°`
+        : t('vessel.stopped'),
+    ]
+    if (v.dest) detail.push(t('vessel.dest', { dest: v.dest }))
+    let warn = false
+    if (fix) {
+      const meters = distance(fix, at)
+      detail.push(t('vessel.distance', { nm: fmtNum(meters / NM, 2) }))
+      const cpa = closestApproach(
+        { lat: fix.lat, lon: fix.lon, knots: fix.speed === null ? null : msToKnots(fix.speed), course: fix.course },
+        { ...at, knots: v.moving ? v.sog : 0, course: v.heading },
+      )
+      if (cpa.minutes > 0 && cpa.minutes <= 60) detail.push(t('vessel.cpa', { m: Math.round(cpa.meters), min: Math.round(cpa.minutes) }))
+      warn = isCloseApproach(cpa) && cpa.minutes > 0
+      if (warn && (!nearest || cpa.minutes < nearest.minutes)) nearest = { name, meters: cpa.meters, minutes: cpa.minutes }
+    }
+    detail.push(t('vessel.age', { min: Math.max(0, Math.round((now - v.at) / 60_000)) }))
+    return { id: v.mmsi, lat: at.lat, lon: at.lon, heading: v.heading, kind: v.kind, moving: v.moving, warn, name, detail }
+  })
+  return { markers, nearest }
+}
+
 /** 海図の画面。現在地・航跡の記録（出港・帰港）・地点の登録・オフライン用の保存 */
 export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPort, shownTrack, onClearShown, focus, hazards, msil, onMsil, onMapCenter }: Props) {
   const [msilError, setMsilError] = useState(false)
@@ -80,6 +118,17 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
   const headingUp = active !== null && settings.headingUp && compass.heading !== null
   const at = fix ?? profile.ports[0] ?? { lat: 35, lon: 139 }
   const rotation = headingUp && compass.heading !== null ? -trueHeading(compass.heading, at) : 0
+
+  // 周りの船（AIS）: 航行モード中は自船の周り、それ以外は地図の中心の周り
+  const vesselCenter = active !== null && fix ? fix : (center ?? fix)
+  const { vessels, error: vesselError } = useVessels(vesselCenter, settings.vessels)
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!settings.vessels) return
+    const id = setInterval(() => setNow(Date.now()), VESSEL_TICK)
+    return () => clearInterval(id)
+  }, [settings.vessels])
+  const shownVessels = useMemo(() => vesselMarkers(vessels, fix, now, t), [vessels, fix, now, t])
 
   const nearestPort = fix
     ? [...profile.ports].sort((a, b) => distance(fix, a) - distance(fix, b))[0]
@@ -122,6 +171,7 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
           msil={msil}
           onMsilError={() => setMsilError(true)}
           userCharts={profile.charts}
+          vessels={settings.vessels ? shownVessels.markers : []}
         />
         {/* 地図の上に、位置・速力・針路 */}
         <div className="hud">
@@ -143,6 +193,11 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
             </>
           ) : (
             <span>{geo.errorCode ? t(geo.errorCode === 1 ? 'pos.denied' : 'pos.unavailable') : t('pos.waiting')}</span>
+          )}
+          {settings.vessels && shownVessels.nearest && (
+            <span className="hud-warn">
+              {t('vessel.approach', { name: shownVessels.nearest.name, m: Math.round(shownVessels.nearest.meters), min: Math.max(1, Math.round(shownVessels.nearest.minutes)) })}
+            </span>
           )}
         </div>
         <CompassRose compass={compass} course={fix?.course ?? null} />
@@ -217,6 +272,23 @@ export function ChartPage({ geo, log, profile, settings, onSettings, onSelectPor
               {t('layer.gsiDepth')}
             </label>
             {settings.gsiDepth && <p className="muted small">{t('layer.gsiDepthNote')}</p>}
+            <label className="check">
+              <input type="checkbox" checked={settings.vessels} onChange={(e) => onSettings({ ...settings, vessels: e.target.checked })} />
+              {t('layer.vessels')}
+              {settings.vessels && <span className="muted small">{vesselError ? t('vessel.error') : t('vessel.count', { n: vessels.length })}</span>}
+            </label>
+            {settings.vessels && (
+              <>
+                <p className="small legend-line vessel-legend">
+                  {(['passenger', 'cargo', 'tanker', 'fishing', 'pleasure', 'service', 'other'] as const).map((k) => (
+                    <span key={k}>
+                      <i className={`vessel-swatch vessel-${k}`} /> {t(`vessel.kind.${k}`)}
+                    </span>
+                  ))}
+                </p>
+                <p className="muted small">{t('layer.vesselsNote')}</p>
+              </>
+            )}
             <p className="small legend-line">
               <b>✚</b> {t('hazard.submerged')} · <b>✳</b> {t('hazard.awash')} · <b>✱</b> {t('hazard.covers')}
             </p>
