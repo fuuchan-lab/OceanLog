@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "net.doitmyself.oceanlog",
+      "sha256_cert_fingerprints": [
+        "94:C9:C3:4C:C7:54:3E:58:8B:F8:78:D4:12:BF:5A:38:A1:39:B5:29:08:54:10:79:30:28:F8:22:EE:E4:7E:6E"
+      ]
+    }
+  }
+]

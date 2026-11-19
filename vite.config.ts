@@ -34,8 +34,9 @@ export default defineConfig({
       },
       workbox: {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        // help.html はアプリ（SPA）ではない単独のページ。指定しないと、オフライン対応の仕組みがアプリの画面を返してしまう
-        navigateFallbackDenylist: [/\/help\.html(\?.*)?$/],
+        // help.html・privacy.html はアプリ（SPA）ではない単独のページ。指定しないと、オフライン対応の仕組みがアプリの画面を返してしまう
+        // /.well-known/（Android アプリとの結び付けの assetlinks.json）も、アプリの画面に差し替えない
+        navigateFallbackDenylist: [/\/(help|privacy)\.html(\?.*)?$/, /\/\.well-known\//],
         runtimeCaching: [
           {
             urlPattern: TILE_HOSTS,

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>プライバシーポリシー / Privacy Policy — 海ログ</title>
+    <style>
+      body { font-family: system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif; max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; line-height: 1.7; color: #1f2937; background: #f4f6fb; }
+      h1 { font-size: 1.5rem; } h2 { font-size: 1.15rem; margin-top: 2em; }
+      section { background: #fff; border-radius: 12px; padding: 8px 20px 16px; margin-bottom: 24px; }
+      @media (prefers-color-scheme: dark) { body { background: #0f172a; color: #e5e7eb; } section { background: #1e293b; } a { color: #93c5fd; } }
+    </style>
+  </head>
+  <body>
+    <section lang="ja">
+      <h1>プライバシーポリシー（海ログ）</h1>
+      <p>海ログ（以下「本アプリ」）は、小型船舶・水上オートバイで海に出る人のための航行支援アプリです。</p>
+      <p>最終更新：2026年11月19日</p>
+      <h2>扱う情報</h2>
+      <ul>
+        <li>現在地（緯度・経度・速度・針路）と、航行モード中に1分おきに記録する航跡、利用者が記録した地点</li>
+        <li>出航地（マザーポート）の位置・名前と、利用者が入力した船の情報（船名・船舶番号・寸法など）</li>
+        <li>利用者が撮影・選択した写真（船、小型船舶操縦免許証、船舶検査手帳、自分の海図）と、そこから端末の中で読み取った文字</li>
+        <li>設定（単位・地図の種類・言語・配色・海しるの API キーなど）</li>
+        <li>Google アカウントの名前・プロフィール画像（ログイン中の表示のため）</li>
+      </ul>
+      <h2>保存先</h2>
+      <ul>
+        <li>利用している端末のブラウザ内（IndexedDB・localStorage）</li>
+        <li>ログインした場合は、利用者の Google ドライブの「OceanLog」フォルダー</li>
+      </ul>
+      <p>開発者のサーバーには、記録・写真・位置を保存しません。</p>
+      <h2>位置情報</h2>
+      <p>位置情報は、本アプリを画面に開いている間だけ使います（バックグラウンドでは取得しません）。地図・天気・潮などを表示するため、地図で見ている範囲や現在地・出航地のおおよその位置を、次の外部サービスに送ります。利用者を識別する情報は付けません（各サービスには、通常の通信と同じく IP アドレスなどが届きます）。</p>
+      <ul>
+        <li>Open-Meteo（天気・風・波・潮位の予報）</li>
+        <li>気象庁（注意報・警報）、国土地理院（地図・地名の検索・住所への変換）</li>
+        <li>OpenStreetMap・OpenSeaMap・GEBCO（地図・海図記号・水深）、Overpass API（暗岩・沈船など）</li>
+        <li>周りの船（AIS）の表示のため、開発者が運用する中継サーバー（Cloudflare Workers）に、地図で見ている範囲を送ります。中継サーバーは aisstream.io のデータから、その範囲の船だけを返し、利用者を識別する情報は記録しません。</li>
+        <li>Windy（風のマップを開いた時だけ）、海しる（海上保安庁。利用者が API キーを設定した場合だけ）</li>
+      </ul>
+      <h2>文字の読み取り</h2>
+      <p>免許証・船舶検査手帳の文字の読み取りは、端末の中で行います。画像を外部に送りません（読み取りの部品は、初回に cdn.jsdelivr.net から読み込みます）。</p>
+      <h2>Google のデータの利用</h2>
+      <p>本アプリは Google ドライブへのアクセス権（drive.file：本アプリが作成したファイルだけに限られます）と、プロフィール情報を利用します。これらは上記の保存・表示のためだけに使い、第三者に提供しません。</p>
+      <h2>広告・アクセス解析</h2>
+      <p>広告・アクセス解析は使っていません。</p>
+      <h2>削除</h2>
+      <p>本アプリで航跡・地点・写真を削除すると、同じアカウントの端末と Google ドライブからも削除されます。Google ドライブの「OceanLog」フォルダーを削除すると、すべてのデータを削除できます。端末のデータは、ブラウザ（アプリ）のデータを削除すると消えます。</p>
+      <h2>お問い合わせ</h2>
+      <p>DoItMyself（<a href="https://doitmyself.net/" target="_blank" rel="noopener">doitmyself.net</a>）</p>
+    </section>
+
+    <section lang="en">
+      <h1>Privacy Policy (OceanLog)</h1>
+      <p>OceanLog ("the app") is a navigation aid for people who go to sea in small boats and personal watercraft.</p>
+      <p>Last updated: November 19, 2026</p>
+      <h2>Information handled</h2>
+      <ul>
+        <li>Your current location (latitude, longitude, speed, course), the track recorded every minute while underway, and points you save</li>
+        <li>Your home port's position and name, and boat details you enter (name, registration number, dimensions, etc.)</li>
+        <li>Photos you take or choose (your boat, boat license, inspection book, your own charts) and the text read from them on your device</li>
+        <li>Settings (units, map type, language, theme, a Umishiru API key, etc.)</li>
+        <li>Your Google account name and profile picture (to show while signed in)</li>
+      </ul>
+      <h2>Where data is stored</h2>
+      <ul>
+        <li>In your device's browser storage (IndexedDB, localStorage)</li>
+        <li>When signed in, in the "OceanLog" folder of your own Google Drive</li>
+      </ul>
+      <p>Records, photos and locations are never stored on the developer's servers.</p>
+      <h2>Location</h2>
+      <p>Location is used only while the app is open on screen (never in the background). To show maps, weather, tides and so on, the area you are viewing and the approximate position of your location or home port are sent to the following services, without anything that identifies you (each service receives your IP address and similar details, as with any web request).</p>
+      <ul>
+        <li>Open-Meteo (weather, wind, wave and tide forecasts)</li>
+        <li>Japan Meteorological Agency (warnings) and GSI Japan (maps, place search, reverse geocoding)</li>
+        <li>OpenStreetMap, OpenSeaMap and GEBCO (maps, seamarks, depth), Overpass API (rocks, wrecks, etc.)</li>
+        <li>To show nearby ships (AIS), the area you are viewing is sent to a relay server run by the developer on Cloudflare Workers. It returns only the ships in that area from aisstream.io data and does not record anything that identifies you.</li>
+        <li>Windy (only when you open the wind map) and Umishiru by the Japan Coast Guard (only if you set an API key)</li>
+      </ul>
+      <h2>Text recognition</h2>
+      <p>Text on licenses and inspection books is read on your device. Images are not sent anywhere (the recognition components are downloaded once from cdn.jsdelivr.net).</p>
+      <h2>Use of Google data</h2>
+      <p>The app uses Google Drive access limited to files it creates (drive.file) and your basic profile, only for the storage and display described above, and does not share them with third parties.</p>
+      <h2>Advertising and analytics</h2>
+      <p>The app uses no ads and no analytics.</p>
+      <h2>Deletion</h2>
+      <p>Deleting a track, point or photo in the app also deletes it from your other devices and Google Drive. Deleting the "OceanLog" folder in Google Drive deletes all data. Data on a device is removed when you clear the browser's (app's) data.</p>
+      <h2>Contact</h2>
+      <p>DoItMyself (<a href="https://doitmyself.net/" target="_blank" rel="noopener">doitmyself.net</a>)</p>
+    </section>
+  </body>
+</html>

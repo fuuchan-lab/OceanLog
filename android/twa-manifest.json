@@ -1,0 +1,56 @@
+{
+  "packageId": "net.doitmyself.oceanlog",
+  "host": "oceanlog.doitmyself.net",
+  "name": "海ログ",
+  "launcherName": "海ログ",
+  "display": "standalone",
+  "themeColor": "#0B3D5C",
+  "themeColorDark": "#0B3D5C",
+  "navigationColor": "#0B3D5C",
+  "navigationColorDark": "#0B3D5C",
+  "navigationDividerColor": "#0B3D5C",
+  "navigationDividerColorDark": "#0B3D5C",
+  "backgroundColor": "#0B3D5C",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://oceanlog.doitmyself.net/icon-512.png",
+  "maskableIconUrl": "https://oceanlog.doitmyself.net/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:/Users/user/.bubblewrap/keys/oceanlog-upload.keystore",
+    "alias": "oceanlog"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://oceanlog.doitmyself.net/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": true
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://oceanlog.doitmyself.net/",
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [
+    {
+      "name": "upload",
+      "value": "94:C9:C3:4C:C7:54:3E:58:8B:F8:78:D4:12:BF:5A:38:A1:39:B5:29:08:54:10:79:30:28:F8:22:EE:E4:7E:6E"
+    }
+  ],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersion": "1.0.0"
+}
