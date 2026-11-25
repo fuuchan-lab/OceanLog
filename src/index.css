@@ -917,7 +917,17 @@ input[type='datetime-local'] {
 
 /* 登録者管理: この端末の登録者の印と、初回の登録者の選択 */
 
-/* 画面の下の広告（adsense.ts に AdSense の ID を入れた時だけ表示される） */
+/* 画面の下の広告（adsense.ts に AdSense の ID を入れた時だけ表示される。届かない間は高さ0） */
+.ad-banner {
+  max-height: 100px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.ad-banner ins {
+  display: block;
+  max-height: 100px;
+}
 
 /* 下のナビゲーション（広告 + ボタン 5 つ）。広告は、表示される時だけ場所を取る */
 
@@ -936,7 +946,18 @@ input[type='datetime-local'] {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+.bottom-dock .ad-banner {
+  border-bottom: 1px solid var(--border);
+}
+
 /* 広告が出ていない（未配信・読み込み前）時は、線も出さない */
+.bottom-dock .ad-banner:not(:has(ins[data-ad-status='filled'])) {
+  border-bottom: 0;
+}
+
+.ad-banner ins[data-ad-status='unfilled'] {
+  display: none !important;
+}
 
 .bottom-nav {
   display: grid;

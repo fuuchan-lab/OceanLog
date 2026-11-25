@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { useI18n } from '../i18n/useI18n.ts'
+import { AdBanner } from './AdBanner.tsx'
 
 export type Tab = 'chart' | 'sea' | 'tide' | 'docs' | 'settings'
 
@@ -102,6 +103,7 @@ export function BottomDock({ tab, onTab, recording, alert, tideAlert, docsAlert 
 
   return (
     <div className="bottom-dock" ref={ref}>
+      <AdBanner />
       <nav className="bottom-nav" aria-label={t('nav.menu')}>
         {TABS.map((id) => (
           <button
