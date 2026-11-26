@@ -70,7 +70,7 @@ export function AdBanner() {
         className="adsbygoogle"
         data-ad-client={ADSENSE_CLIENT}
         data-ad-slot={ADSENSE_SLOT}
-        data-ad-format="horizontal"
+        style={{ display: 'inline-block', width: 320, height: 50 }}
       />
     </div>
   )
