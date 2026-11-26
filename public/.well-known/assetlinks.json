@@ -1,11 +1,16 @@
 [
   {
-    "relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
     "target": {
       "namespace": "android_app",
       "package_name": "net.doitmyself.oceanlog",
       "sha256_cert_fingerprints": [
-        "94:C9:C3:4C:C7:54:3E:58:8B:F8:78:D4:12:BF:5A:38:A1:39:B5:29:08:54:10:79:30:28:F8:22:EE:E4:7E:6E"
+        "94:C9:C3:4C:C7:54:3E:58:8B:F8:78:D4:12:BF:5A:38:A1:39:B5:29:08:54:10:79:30:28:F8:22:EE:E4:7E:6E",
+        "35:C3:A5:E2:F6:08:6D:64:CC:C7:E4:5A:B3:FE:99:05:91:CE:8E:1F:9B:20:F8:94:55:05:1C:84:37:40:FF:A2",
+        "25:F4:85:22:A2:F2:0E:CC:6D:71:51:22:F4:7E:CC:C1:90:C1:28:4E:5D:21:CE:28:F9:C8:31:8F:C2:4E:B3:32",
+        "80:3C:BD:EE:D3:B9:16:52:54:39:40:3A:E1:87:85:5F:3C:3A:92:D4:AA:D0:50:ED:52:38:8F:B7:AF:CD:DC:14"
       ]
     }
   }
